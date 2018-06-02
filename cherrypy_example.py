@@ -32,6 +32,8 @@ reportLocation = "1"
 globalUsername = "username"
 globalHashedPass = "hashedPass"
 globalAutoReport = False
+#Test purposes
+globalTestMessage = "message unavailable"
 
 class MainApp(object):
 
@@ -48,17 +50,28 @@ class MainApp(object):
         Page = "I don't know where you're trying to go, so have a 404 Error."
         cherrypy.response.status = 404
         return Page
-
+    
+###############################################################################
+#                                                                             #
+#                                  SEPERATOR                                  #
+#                                                                             #
+###############################################################################
+ 
     # PAGES (which return HTML that can be viewed in browser)
     @cherrypy.expose
     def index(self):
         Page = "Welcome!<br>"
         try:
             Page += "Hello " + cherrypy.session['username'] + "!<br>"
-            Page += "Here is some bonus text because you've logged in!"
+            Page += "Here is some bonus text because you've logged in!<br>"
+            #Test purposes
+            Page += "Test Message: "
+            Page += globalTestMessage
         except KeyError: #There is no username
             Page += "Click here to <a href='/login'>login</a>."
         return Page
+
+############################################################################### Login
     
     @cherrypy.expose
     def login(self):
@@ -67,68 +80,7 @@ class MainApp(object):
         Page += 'Password: <input type="text" name="password"/>'
         Page += '<input type="submit" value="Login"/></form>'
         return Page
-
-    @cherrypy.expose
-    def getonlineusers(self):
-        #open url
-        API = "/getList"
-        username = "?username=" + cherrypy.session['username']
-        password = "&password=" + cherrypy.session['hashedPass']
-        response = urllib2.urlopen(defURL + API + username + password)
-        #get url contents
-        html = response.read()
-        htmlLines = html.splitlines()
-        #display url contents
-        Page = '<br>'
-        for i in htmlLines:
-            Page += i
-            Page += '<br>'
-        return Page
-
-    @cherrypy.expose
-    def initReport(self):
-        global background
-        self.report()
-        #setup online report thread (run after 60 seconds)
-        background = threading.Timer(60, self.backgroundReport)
-        background.start()
-        raise cherrypy.HTTPRedirect('/getonlineusers')
-
-    @cherrypy.expose
-    def report(self):
-        #open url
-        API = "/report"
-        username = "?username=" + globalUsername
-        password = "&password=" + globalHashedPass
-        ip = "&ip=" + reportIP
-        port = "&port=" + str(listen_port)
-        location = "&location=" + reportLocation
-        pubkey = ""
-        enc = ""
-        response = urllib2.urlopen(defURL + API + username + password + ip + port + location + pubkey + enc)
-
-    def backgroundReport(self):
-        while globalAutoReport:
-            #open url
-            API = "/report"
-            username = "?username=" + globalUsername
-            password = "&password=" + globalHashedPass
-            ip = "&ip=" + reportIP
-            port = "&port=" + str(listen_port)
-            location = "&location=" + reportLocation
-            pubkey = ""
-            enc = ""
-            response = urllib2.urlopen(defURL + API + username + password + ip + port + location + pubkey + enc)
-            print "report sent"
-            #run this every 60 seconds
-            time.sleep(60)
-        
-    @cherrypy.expose    
-    def sum(self, a=0, b=0): #All inputs are strings by default
-        output = int(a)+int(b)
-        return str(output)
-        
-    # LOGGING IN AND OUT
+    
     @cherrypy.expose
     def signin(self, username=None, password=None):
         global globalUsername
@@ -148,7 +100,19 @@ class MainApp(object):
             raise cherrypy.HTTPRedirect('/getonlineusers')
         else:
             raise cherrypy.HTTPRedirect('/logintest')
+    
+    #TODO
+    """Allowing this only allows the user lkim564 to login through this script
+    Adjust so that anyone may log in"""
+    def authoriseUserLogin(self, username, password):
+        hashedPass = hashlib.sha256(str(password+username)).hexdigest()
+        if (username == "lkim564") and (hashedPass == "d9174a05cbe8d7707c53d7d5b78ce6190cd65a8f0fbc849dc966d962a88302e3"):
+            return 0
+        else:
+            return 1
 
+############################################################################### Logout
+    
     @cherrypy.expose
     def signout(self):
         global globalAutoReport
@@ -165,16 +129,113 @@ class MainApp(object):
             cherrypy.lib.sessions.expire()
         raise cherrypy.HTTPRedirect('/')
 
-    #TODO
-    #Allowing this only allows the user lkim564 to login through this script
-    #Adjust so that anyone may log in
-    def authoriseUserLogin(self, username, password):
-        hashedPass = hashlib.sha256(str(password+username)).hexdigest()
-        if (username == "lkim564") and (hashedPass == "d9174a05cbe8d7707c53d7d5b78ce6190cd65a8f0fbc849dc966d962a88302e3"):
-            return 0
-        else:
-            return 1
-          
+############################################################################### List Users
+
+    @cherrypy.expose
+    def getallusers(self):
+        #open url
+        API = "/listUsers"
+        response = urllib2.urlopen(defURL + API)
+        #get url contents
+        html = response.read()
+        htmlUsers = html.split(',')
+        #display url contents
+        Page = '<br>'
+        for i in htmlUsers:
+            Page += i
+            Page += '<br>'
+        return Page
+        
+    @cherrypy.expose
+    def getonlineusers(self):
+        #open url
+        API = "/getList"
+        username = "?username=" + cherrypy.session['username']
+        password = "&password=" + cherrypy.session['hashedPass']
+        response = urllib2.urlopen(defURL + API + username + password)
+        #get url contents
+        html = response.read()
+        htmlLines = html.splitlines()
+        #display url contents
+        Page = '<br>'
+        for i in htmlLines:
+            Page += i
+            Page += '<br>'
+        return Page
+
+############################################################################### Report
+    
+    @cherrypy.expose
+    def initReport(self):
+        global background
+        self.report()
+        #setup online report thread (run after 60 seconds)
+        background = threading.Timer(60, self.backgroundReport)
+        background.start()
+        raise cherrypy.HTTPRedirect('/getonlineusers')
+    
+    @cherrypy.expose
+    def report(self):
+        #open url
+        API = "/report"
+        username = "?username=" + globalUsername
+        password = "&password=" + globalHashedPass
+        ip = "&ip=" + reportIP
+        port = "&port=" + str(listen_port)
+        location = "&location=" + reportLocation
+        pubkey = ""
+        enc = ""
+        response = urllib2.urlopen(defURL + API + username + password + ip + port + location + pubkey + enc)
+    
+    def backgroundReport(self):
+        while globalAutoReport:
+            #open url
+            API = "/report"
+            username = "?username=" + globalUsername
+            password = "&password=" + globalHashedPass
+            ip = "&ip=" + reportIP
+            port = "&port=" + str(listen_port)
+            location = "&location=" + reportLocation
+            pubkey = ""
+            enc = ""
+            response = urllib2.urlopen(defURL + API + username + password + ip + port + location + pubkey + enc)
+            print "report sent"
+            #run this every 60 seconds
+            time.sleep(60)
+
+############################################################################### Receive Messages
+
+    @cherrypy.expose
+    @cherrypy.tools.json_in()
+    def receiveMessage(self):
+        global globalTestMessage
+        input_dict = cherrypy.request.json
+        sender = input_dict['sender']
+        destination = input_dict['destination']
+        message = input_dict['message']
+        stamp = input_dict['stamp']
+        #Test purposes
+        globalTestMessage = sender + " " + destination + " " + message + " " + stamp
+
+############################################################################### Send Messages
+
+    #@cherrypy.expose   
+    #def sendMessage(self):
+        
+            
+############################################################################### I don't know what this is...
+    
+    @cherrypy.expose    
+    def sum(self, a=0, b=0): #All inputs are strings by default
+        output = int(a)+int(b)
+        return str(output)
+
+###############################################################################
+#                                                                             #
+#                                  SEPERATOR                                  #
+#                                                                             #
+###############################################################################
+
 def runMainApp():
     # Create an instance of MainApp and tell Cherrypy to send all requests under / to it. (ie all of them)
     cherrypy.tree.mount(MainApp(), "/")
