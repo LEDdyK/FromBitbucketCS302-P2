@@ -52,9 +52,9 @@ class MainApp(object):
         return Page
     
 ###############################################################################
-#                                                                             #
+# SEPERATOR                                                         SEPERATOR #
 #                                  SEPERATOR                                  #
-#                                                                             #
+# SEPERATOR                                                         SEPERATOR #
 ###############################################################################
  
     # PAGES (which return HTML that can be viewed in browser)
@@ -214,14 +214,46 @@ class MainApp(object):
         destination = input_dict['destination']
         message = input_dict['message']
         stamp = input_dict['stamp']
+        try:
+            encoding = input_dict['encoding']
+        except KeyError:
+            encoding = 0
+        try:
+            encryption = input_dict['encryption']
+        except KeyError:
+            encryption = 0
+        try:
+            hashing = input_dict['hashing']
+        except KeyError:
+            hashing = 0
+        try:
+            hexhash = input_dict['hash']
+        except KeyError:
+            hexhash = "nohash"
+        try:
+            decryptionKey = input_dict['decryptionKey']
+        except KeyError:
+            decryptionKey = "nokey"
+        try:
+            groupID = input_dict['groupID']
+        except KeyError:
+            groupID = "noID"
         #Test purposes
-        globalTestMessage = sender + " " + destination + " " + message + " " + stamp
+        globalTestMessage = sender + " " + destination + " " + message + " " + stamp + " " + str(encoding) + " " + str(encryption) + " " + str(hashing) + " " + hexhash + " " + decryptionKey + " " + groupID
 
 ############################################################################### Send Messages
 
-    #@cherrypy.expose   
-    #def sendMessage(self):
-        
+    @cherrypy.expose   
+    def sendMessage(self):
+        output_dict = {
+            "sender":"Lite Kim",
+            "destination":"Somewhere",
+            "message":"Hi",
+            "stamp":"00:00:00:00"
+            }
+        data = json.dumps(output_dict)
+        req = urllib2.Request("http://192.168.1.73:10001/receiveMessage", data, {'Content-Type':'application/json'})
+        response = urllib2.urlopen(req)
             
 ############################################################################### I don't know what this is...
     
@@ -231,9 +263,9 @@ class MainApp(object):
         return str(output)
 
 ###############################################################################
-#                                                                             #
+# SEPERATOR                                                         SEPERATOR #
 #                                  SEPERATOR                                  #
-#                                                                             #
+# SEPERATOR                                                         SEPERATOR #
 ###############################################################################
 
 def runMainApp():
