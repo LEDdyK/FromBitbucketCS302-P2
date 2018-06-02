@@ -306,7 +306,21 @@ class MainApp(object):
         data = json.dumps(output_dict)
         req = urllib2.Request("http://192.168.1.73:10001/receiveFile", data, {'Content-Type':'application/json'})
         response = urllib2.urlopen(req)
-            
+
+############################################################################### Profile
+
+    @cherrypy.expose
+    def getProfile(self):
+        lastUpdated = "00:00:00:00"
+        fullname = "Lite W. Kim"
+        position = "Student at the University of Auckland"
+        description = "description"
+        location = "location"
+        picture = "https://scontent-syd2-1.xx.fbcdn.net/v/t1.0-1/p160x160/30653197_1478816908914193_2001747320223301632_n.jpg?_nc_cat=0&oh=e231c236754dafaf31ea6a88f6de63f3&oe=5B773B14"
+        encoding = 0
+        encryption = 0
+        decryptionKey = "nokey"
+    
 ############################################################################### I don't know what this is...
     
     @cherrypy.expose    
