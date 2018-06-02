@@ -241,6 +241,42 @@ class MainApp(object):
         #Test purposes
         globalTestMessage = sender + " " + destination + " " + message + " " + stamp + " " + str(encoding) + " " + str(encryption) + " " + str(hashing) + " " + hexhash + " " + decryptionKey + " " + groupID
 
+############################################################################### Receive Files
+
+    @cherrypy.expose
+    @cherrypy.tools.json_in()
+    def receiveFile(self):
+        global globalTestMessage
+        input_dict = cherrypy.request.json
+        sender = input_dict['sender']
+        destination = input_dict['destination']
+        base64 = input_dict['file']
+        filename = input_dict['filename']
+        content_type = input_dict['content_type']
+        stamp = input_dict['stamp']
+        try:
+            encryption = input_dict['encryption']
+        except KeyError:
+            encryption = 0
+        try:
+            hashing = input_dict['hashing']
+        except KeyError:
+            hashing = 0
+        try:
+            hexhash = input_dict['hash']
+        except KeyError:
+            hexhash = "nohash"
+        try:
+            decryptionKey = input_dict['decryptionKey']
+        except KeyError:
+            decryptionKey = "nokey"
+        try:
+            groupID = input_dict['groupID']
+        except KeyError:
+            groupID = "noID"
+        #Test purposes
+        globalTestMessage = sender + " " + destination + " " + base64 + " " + filename + " " + content_type + " " + stamp + " " + str(encryption) + " " + str(hashing) + " " + hexhash + " " + decryptionKey + " " + groupID
+
 ############################################################################### Send Messages
 
     @cherrypy.expose   
@@ -253,6 +289,22 @@ class MainApp(object):
             }
         data = json.dumps(output_dict)
         req = urllib2.Request("http://192.168.1.73:10001/receiveMessage", data, {'Content-Type':'application/json'})
+        response = urllib2.urlopen(req)
+
+############################################################################### Send Files
+
+    @cherrypy.expose   
+    def sendMessage(self):
+        output_dict = {
+            "sender":"Lite Kim",
+            "destination":"Somewhere",
+            "base64":"Hi",
+            "filename":"filename",
+            "content_type":"content_type"
+            "stamp":"00:00:00:00"
+            }
+        data = json.dumps(output_dict)
+        req = urllib2.Request("http://192.168.1.73:10001/receiveFile", data, {'Content-Type':'application/json'})
         response = urllib2.urlopen(req)
             
 ############################################################################### I don't know what this is...
