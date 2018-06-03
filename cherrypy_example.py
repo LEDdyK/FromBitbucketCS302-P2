@@ -60,25 +60,28 @@ class MainApp(object):
     # PAGES (which return HTML that can be viewed in browser)
     @cherrypy.expose
     def index(self):
-        Page = "Welcome!<br>"
         try:
+            Page = "Welcome!<br>"
             Page += "Hello " + cherrypy.session['username'] + "!<br>"
             Page += "Here is some bonus text because you've logged in!<br>"
             #Test purposes
             Page += "Test Message: "
             Page += globalTestMessage
         except KeyError: #There is no username
-            Page += "Click here to <a href='/login'>login</a>."
+            Page = "<body><div>Welcome!<br>"
+            Page += "Click here to <a href='/login'>login</a>.</div></body>"
+            Page += open("pageWelcome.css","r").read()
         return Page
 
 ############################################################################### Login
     
     @cherrypy.expose
     def login(self):
-        Page = '<form action="/signin" method="post" enctype="multipart/form-data">'
-        Page += 'Username: <input type="text" name="username"/><br>'
-        Page += 'Password: <input type="text" name="password"/>'
-        Page += '<input type="submit" value="Login"/></form>'
+        Page = '<body><form action="/signin" method="post" enctype="multipart/form-data">'
+        Page += '<div class=username>Username:<br><input type="text" name="username"/></div>'
+        Page += '<div class=password>Password:<br><input type="text" name="password"/>'
+        Page += '<input class=login type="submit" value="Login"/></form></div></body>'
+        Page += open("pageLogin.css","r").read()
         return Page
     
     @cherrypy.expose
@@ -99,7 +102,7 @@ class MainApp(object):
             self.initReport()
             raise cherrypy.HTTPRedirect('/getonlineusers')
         else:
-            raise cherrypy.HTTPRedirect('/logintest')
+            raise cherrypy.HTTPRedirect('/login')
     
     #TODO
     """Allowing this only allows the user lkim564 to login through this script
@@ -300,7 +303,7 @@ class MainApp(object):
             "destination":"Somewhere",
             "base64":"Hi",
             "filename":"filename",
-            "content_type":"content_type"
+            "content_type":"content_type",
             "stamp":"00:00:00:00"
             }
         data = json.dumps(output_dict)
