@@ -62,7 +62,7 @@ class MainApp(object):
     def index(self):
         try:
             Page = "<body>"
-            Page += "<div class=header><div class=serverstatus>server<br>status</div><br><div class=status></div><div class=logout>logout</div></div>"
+            Page += "<div class=header><div class=serverstatus>server status:</div><div class=status>"+self.checkStatus()+"</div><div class=logout><a href=/signout>logout</a></div></div>"
             Page += "<div class=topsection></div>"
             Page += "<div class=dp></div>"
             Page += "<div class=welcome>Hello, " + cherrypy.session['username'] + "!<br></div>"
@@ -86,6 +86,17 @@ class MainApp(object):
             Page += "Click here to <a href='/login'>login</a>.</div></body>"
             Page += open("pageWelcome.css","r").read()
         return Page
+
+    def checkStatus(self):
+        API = "/listAPI"
+        response = urllib2.urlopen(defURL + API)
+        html = response.read()
+        htmlLines = html.splitlines()
+        firstLine = htmlLines[0].split(' ')
+        if firstLine[0] == "Available":
+            return " online"
+        else:
+            return " offline"
 
 ############################################################################### Login
     
@@ -114,7 +125,7 @@ class MainApp(object):
             globalAutoReport = True
             #report to login server
             self.initReport()
-            raise cherrypy.HTTPRedirect('/getonlineusers')
+            raise cherrypy.HTTPRedirect('/')
         else:
             raise cherrypy.HTTPRedirect('/login')
     
@@ -177,8 +188,9 @@ class MainApp(object):
         Page = '<br>'
         for i in range(1,len(htmlLines)):
             user = htmlLines[i].split(',')
-            Page += user[0]
-            Page += '<br>'
+            if user[0] != cherrypy.session['username']:
+                Page += user[0]
+                Page += '<br>'
         return Page
 
 ############################################################################### Report
@@ -190,7 +202,6 @@ class MainApp(object):
         #setup online report thread (run after 60 seconds)
         background = threading.Timer(60, self.backgroundReport)
         background.start()
-        raise cherrypy.HTTPRedirect('/getonlineusers')
     
     @cherrypy.expose
     def report(self):
