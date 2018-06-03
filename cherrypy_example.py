@@ -61,12 +61,26 @@ class MainApp(object):
     @cherrypy.expose
     def index(self):
         try:
-            Page = "Welcome!<br>"
-            Page += "Hello " + cherrypy.session['username'] + "!<br>"
-            Page += "Here is some bonus text because you've logged in!<br>"
+            Page = "<body>"
+            Page += "<div class=header><div class=serverstatus>server<br>status</div><br><div class=status></div><div class=logout>logout</div></div>"
+            Page += "<div class=topsection></div>"
+            Page += "<div class=dp></div>"
+            Page += "<div class=welcome>Hello, " + cherrypy.session['username'] + "!<br></div>"
+            Page += "<div class=textbody>"
+            Page += "<div class=navigation><div class=dash>dashboard</div><div class=users>users</div><div class=groups>groups</div><div class=messages>messages</div></div>"
+            Page += "<div class=board>"
+            Page += "</div>"
+            Page += "<div class=latest>"
+            Page += "</div>"
+            Page += "</div>"
+            Page += "<div class=contacts>"
+            Page += self.getonlineusers()
+            Page += "</div>"
             #Test purposes
-            Page += "Test Message: "
-            Page += globalTestMessage
+            Page += "<div>Test Message: "
+            Page += globalTestMessage + "</div>"
+            Page += "</body>"
+            Page += open("test.css","r").read()
         except KeyError: #There is no username
             Page = "<body><div>Welcome!<br>"
             Page += "Click here to <a href='/login'>login</a>.</div></body>"
@@ -161,8 +175,9 @@ class MainApp(object):
         htmlLines = html.splitlines()
         #display url contents
         Page = '<br>'
-        for i in htmlLines:
-            Page += i
+        for i in range(1,len(htmlLines)):
+            user = htmlLines[i].split(',')
+            Page += user[0]
             Page += '<br>'
         return Page
 
