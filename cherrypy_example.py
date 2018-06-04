@@ -11,13 +11,14 @@
 #            Python  (We use 2.7)
 
 import cherrypy
+import hashlib
+import json
+import os
+import threading
+import time
 import urllib
 import urllib2
 import urlparse
-import hashlib
-import json
-import threading
-import time
 
 # The address we listen for connections on
 defURL = "http://cs302.pythonanywhere.com"
@@ -73,10 +74,8 @@ class MainApp(object):
             Page += "<div class=users><a href=/>users</a></div>"
             Page += "<div class=groups><a href=/>groups</a></div>"
             Page += "<div class=messages><a href=/>messages</a></div></div>"
-            Page += "<div class=bodybody><div class=board><div id=board_header>Global Message Board</div><div id=board_content>"
-            Page += ''
-            Page += "</div></div><div class=latest><div id=latest_header>Latest Messages</div><div id=latest_content>"
-            Page += ''
+            Page += "<div class=bodybody><div class=board><div id=board_header>Global Message Board</div><div id=board_content>"+self.getBoard()
+            Page += "</div></div><div class=latest><div id=latest_header>Latest Messages</div><div id=latest_content>"+self.getLatest()
             Page += "</div></div></div></div><div class=contacts>"
             Page += "<div id=contacts_header>contacts</div><div id=contacts_content>"
             Page += self.getonlineusers()
@@ -84,6 +83,7 @@ class MainApp(object):
             #Test purposes
             Page += "<div>Test Message: "
             Page += globalTestMessage + "</div>"
+            Page += "<div id=ip>" + listen_ip + "</div><div id=port>" + str(listen_port) + "</div>"
             Page += "</body>"
             Page += '<script language="javascript">'
             Page += open("jquery-3.3.1.min.js","r").read()
@@ -97,6 +97,7 @@ class MainApp(object):
             Page += open("pageWelcome.css","r").read()
         return Page
 
+    @cherrypy.expose
     def checkStatus(self):
         API = "/listAPI"
         response = urllib2.urlopen(defURL + API)
@@ -149,8 +150,8 @@ class MainApp(object):
         else:
             return 1
 
-############################################################################### Logout (of server)
-    
+############################################################################### Logout (from server)
+
     @cherrypy.expose
     def signout(self):
         global globalAutoReport
@@ -167,7 +168,7 @@ class MainApp(object):
             cherrypy.lib.sessions.expire()
         raise cherrypy.HTTPRedirect('/')
 
-############################################################################### List users (on server)
+############################################################################### Get users (from server)
 
     @cherrypy.expose
     def getallusers(self):
@@ -207,7 +208,6 @@ class MainApp(object):
 
 ############################################################################### Report (to server)
     
-    @cherrypy.expose
     def initReport(self):
         global background
         self.serverReport()
@@ -215,7 +215,6 @@ class MainApp(object):
         background = threading.Timer(60, self.backgroundReport)
         background.start()
     
-    @cherrypy.expose
     def serverReport(self):
         #open url
         API = "/report"
@@ -248,7 +247,7 @@ class MainApp(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_in()
-    def receiveMessage(self):
+    def receiveMessage(self, globalMessage="0"):
         global globalTestMessage
         input_dict = cherrypy.request.json
         sender = input_dict['sender']
@@ -279,17 +278,77 @@ class MainApp(object):
             groupID = input_dict['groupID']
         except KeyError:
             groupID = "noID"
-        #Test purposes
-        globalTestMessage = sender + " " + destination + " " + message + " " + stamp + " " + str(encoding) + " " + str(encryption) + " " + str(hashing) + " " + hexhash + " " + decryptionKey + " " + groupID
-        messageFile = open("messages/" + sender + ".txt",'a+')
-        messageFile.write(stamp + "\n" + message + "\n")
-        messageFile.close()
+        if globalMessage == "0":
+            #append appropriate message file (by sender)
+            messageFile = open("messages/" + sender + ".txt",'a+')
+            messageFile.write(stamp + "\n" + message + "\n")
+            messageFile.close()
+            #append latest
+            line = open("messages/0000.txt").readline()
+            value = int(line)
+            if value == 0:
+                value = 1
+                latest = open("messages/0000.txt",'w')
+                latest.write(str(value) + "\nstamp: " + stamp + "\nmessage: " + message + "\nsender: " + sender + "\n\n")
+            else:
+                value += 1
+                latest = open("messages/0000.txt",'r')
+                lines = latest.read().splitlines()
+                latest.close()
+                latest = open("messages/0000.txt",'w')
+                if value < 11:
+                    latest.write(str(value))
+                else:
+                    latest.write("10")
+                latest.close()
+                latest = open("messages/0000.txt",'a')
+                latest.write("\nstamp: " + stamp + "\nmessage: " + message + "\nsender: " + sender)                
+                if value < 11:
+                    for i in range (1,len(lines)):
+                        latest.write("\n" + lines[i])
+                else:
+                    for i in range (1,len(lines)-3):
+                        latest.write("\n" + lines[i])
+            latest.close()
+        else:
+            #append global message file
+            messageFile = open("messages/1111.txt",'r')
+            temp = messageFile.read()
+            messageFile.close()
+            messageFile = open("messages/1111.txt",'w+')
+            messageFile.write(stamp + "\n" + message + "\nsender: " + sender + "\n\n")
+            messageFile.write(temp)
+            messageFile.close()
+
+############################################################################### Get latest messages (from my database)
+
+    @cherrypy.expose
+    def getLatest(self):
+        latest = open("messages/0000.txt",'r')
+        lines = latest.read().splitlines()
+        latest.close()
+        output = ''
+        for i in range (1,len(lines)):
+            output += lines[i] + "<br>"
+        return output
+
+############################################################################### Get global messages (from my database)
+
+    @cherrypy.expose
+    def getBoard(self):
+        latest = open("messages/1111.txt",'r')
+        lines = latest.read().splitlines()
+        latest.close()
+        output = ''
+        for i in range (0,len(lines)):
+            output += lines[i] + "<br>"
+        return output
+        
 ############################################################################### Receive files (from users)
 
     @cherrypy.expose
     @cherrypy.tools.json_in()
     def receiveFile(self):
-        global globalTestMessage
         input_dict = cherrypy.request.json
         sender = input_dict['sender']
         destination = input_dict['destination']
@@ -317,18 +376,15 @@ class MainApp(object):
             groupID = input_dict['groupID']
         except KeyError:
             groupID = "noID"
-        #Test purposes
-        globalTestMessage = sender + " " + destination + " " + base64 + " " + filename + " " + content_type + " " + stamp + " " + str(encryption) + " " + str(hashing) + " " + hexhash + " " + decryptionKey + " " + groupID
-
+        
 ############################################################################### Send messages (to users)
-
-    @cherrypy.expose   
+   
     def sendMessage(self):
         output_dict = {
             "sender":"Lite Kim",
             "destination":"Somewhere",
             "message":"Hi",
-            "stamp":"00:00:00:00"
+            "stamp":str(time.time())
             }
         data = json.dumps(output_dict)
         req = urllib2.Request("http://192.168.1.73:10001/receiveMessage", data, {'Content-Type':'application/json'})
@@ -336,15 +392,14 @@ class MainApp(object):
 
 ############################################################################### Send files (to users)
 
-    @cherrypy.expose   
-    def sendMessage(self):
+    def sendFile(self):
         output_dict = {
             "sender":"Lite Kim",
             "destination":"Somewhere",
             "base64":"Hi",
             "filename":"filename",
             "content_type":"content_type",
-            "stamp":"00:00:00:00"
+            "stamp":str(time.time())
             }
         data = json.dumps(output_dict)
         req = urllib2.Request("http://192.168.1.73:10001/receiveFile", data, {'Content-Type':'application/json'})
@@ -353,13 +408,16 @@ class MainApp(object):
 ############################################################################### Give profile (to users)
 
     @cherrypy.expose
-    def getProfile(self):
-        lastUpdated = "00:00:00:00"
-        fullname = "Lite W. Kim"
-        position = "Student at the University of Auckland"
-        description = "description"
-        location = "location"
-        picture = "https://scontent-syd2-1.xx.fbcdn.net/v/t1.0-1/p160x160/30653197_1478816908914193_2001747320223301632_n.jpg?_nc_cat=0&oh=e231c236754dafaf31ea6a88f6de63f3&oe=5B773B14"
+    def getProfile(self,sender,username):
+        proFile = open("server/profile/"+username+".txt", "r")
+        lastUpdated = str(time.time())
+        proFileSeg = proFile.read().split('>>')
+        proFile.close()
+        fullname = proFileSeg[1]
+        position = proFileSeg[3]
+        description = proFileSeg[5]
+        location = proFileSeg[7]
+        picture = proFileSeg[9]
         encoding = 0
         encryption = 0
         decryptionKey = "nokey"
@@ -375,6 +433,43 @@ class MainApp(object):
             "decryptionKey":decryptionKey
             }
         data = json.dumps(output_dict)
+        return data
+
+############################################################################### View profile
+
+    @cherrypy.expose
+    def viewProfile(self,sender,username):
+        input_dict = json.loads(self.getProfile(sender,username))
+        fullname = input_dict['fullname']
+        position = input_dict['position']
+        description = input_dict['description']
+        desLines = description.split('\n')
+        newDes = ''
+        for i in desLines:
+            newDes += i + '<br>'
+        location = input_dict['location']
+        picture = input_dict['picture']
+        try:
+            encoding = input_dict['encoding']
+        except KeyError:
+            encoding = 0
+        try:
+            encryption = input_dict['encryption']
+        except KeyError:
+            encryption = 0
+        try:
+            decryptionKey = input_dict['decryptionKey']
+        except KeyError:
+            decryptionKey = "nokey"
+        Page = "<body>"
+        Page += "<div class=fullname><div id=fullname_header>Fullname</div><div id=fullname_content>"+fullname+"</div></div>"
+        Page += "<div class=position><div id=position_header>Position</div><div id=position_content>"+position+"</div></div>"
+        Page += "<div class=description><div id=description_header>Description</div><div id=description_content>"+newDes+"</div></div>"
+        Page += "<div class=location><div id=location_header>Location</div><div id=location_content>"+location+"</div></div>"
+        Page += "<div class=picture><div id=picture_header>Picture</div><div id=picture_content>"+picture+"</div></div>"
+        Page += "</body>"
+        Page += open("profile.css").read()
+        return Page
 
 ############################################################################### Give ping (to users)
     @cherrypy.expose
@@ -417,19 +512,19 @@ class MainApp(object):
         else:
             return getList.read()
 
-############################################################################### /report (to users)
+############################################################################### /report (to my database)
 
     @cherrypy.expose
     def report(self, username, passphrase, signature, location, ip, port, encryption="0"):
         return "report"
 
-############################################################################### /logoff (from users)
+############################################################################### /logoff (from my database)
 
     @cherrypy.expose
     def logoff(self, username, passphrase, signature, encryption="0"):
         return "logoff"
     
-############################################################################### I don't know what this is...
+############################################################################### I don't know what this is for...
     
     @cherrypy.expose    
     def sum(self, a=0, b=0): #All inputs are strings by default

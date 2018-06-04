@@ -1,0 +1,80 @@
+<style type=text/css>
+	body {
+		background: linear-gradient(rgba(10,44,65,1), black);
+		background-attachment: fixed;
+		background-size: 100% 100%;
+		color: white;
+		font-family: Sans-Serif;
+		font-size: 20px;
+	}
+	
+	.fullname {
+		margin-top: 40px;
+	}
+	#fullname_header {
+		background-color: red;
+		font-family: Moon;
+		padding-left: 10px;
+	}
+	#fullname_content {
+		margin-top: 5px;
+		word-wrap: break-word;
+		padding-left: 10px;
+	}
+	
+	.position {
+		margin-top: 40px;
+	}
+	#position_header {
+		background-color: red;
+		font-family: Moon;
+		padding-left: 10px;
+	}
+	#position_content {
+		margin-top: 5px;
+		word-wrap: break-word;
+		padding-left: 10px;
+	}
+	
+	.description {
+		margin-top: 40px;
+	}
+	#description_header {
+		background-color: red;
+		font-family: Moon;
+		padding-left: 10px;
+	}
+	#description_content {
+		margin-top: 5px;
+		word-wrap: break-word;
+		padding-left: 10px;
+	}
+	
+	.location {
+		margin-top: 40px;
+	}
+	#location_header {
+		background-color: red;
+		font-family: Moon;
+		padding-left: 10px;
+	}
+	#location_content {
+		margin-top: 5px;
+		word-wrap: break-word;
+		padding-left: 10px;
+	}
+	
+	.picture {
+		margin-top: 40px;
+	}
+	#picture_header {
+		background-color: red;
+		font-family: Moon;
+		padding-left: 10px;
+	}
+	#picture_content {
+		margin-top: 5px;
+		word-wrap: break-word;
+		padding-left: 10px;
+	}
+</style>

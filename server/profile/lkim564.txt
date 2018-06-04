@@ -1,0 +1,25 @@
+<<fullname>>Lite W. Kim>>
+<<position>>Postgraduate Student (University of Auckland)>>
+<<description>><b>Education</b>
+<u>The University of Auckland</u>
+Master's Degree in Engineering Studies - <i>Software</i>
+2018 - 2019
+Bachelor's Degree in Engineering - <i>Mechatronics</i>
+2013 - 2016
+<u>Hamilton Boys' High School</u>
+National Certificate of Educational Achievement (NCEA Levels 1, 2, 3)
+Cambridge International Examinations (CIE AS)
+
+<b>Technical Skills</b>
+<u>Programming</u>
+C, C++, C#, Java, Python, CSS, HTML, JS, R, MATLAB, Verilog, Assembly, <i>SQL</i>, PLC
+<u>General</u>
+Microsoft Office, Adobe Photoshop, Adobe InDesign, Adobe Illustrator, Sketching/Graphical drawing
+
+<b>Work Experience</b>
+<u>Low Impact (Auckland)</u>
+March 2017 - April 2018
+<u>Virtualight (Auckland)</u>
+November 2016 - November 2017>>
+<<location>>Auckland>>
+<<picture>>https://image.ibb.co/iW7Ycd/dplkim564.jpg>>

@@ -1,22 +1,42 @@
 $(document).ready(
 	function() {
 		setInterval(function() {
+			var ipText = document.getElementById('ip').textContent;
+			var portText = document.getElementById('port').textContent;
+			var head = "http://";
+			var sep = ":"
+			var API1 = "/getonlineusers";
+			var API2 = "/checkStatus";
+			var API3 = "/getBoard";
+			var API4 = "/getLatest";
 			$.ajax({
 				type: "POST",
-				url: "http://192.168.1.75:10000/getonlineusers",
+				url: head.concat(ipText.concat(sep.concat(portText.concat(API1)))),
 				data: {}
-			}).done(function( o ) {
-				//var someval = Math.floor(Math.random() * 100);
+			}).done(function(o) {
 				$('#contacts_content').html(o);
 			});
+			$.ajax({
+				type: "POST",
+				url: head.concat(ipText.concat(sep.concat(portText.concat(API2)))),
+				data: {}
+			}).done(function(o) {
+				$('.status').html(o);
+			});
+			$.ajax({
+				type: "POST",
+				url: head.concat(ipText.concat(sep.concat(portText.concat(API3)))),
+				data: {}
+			}).done(function(o) {
+				$('#board_content').html(o);
+			});
+			$.ajax({
+				type: "POST",
+				url: head.concat(ipText.concat(sep.concat(portText.concat(API4)))),
+				data: {}
+			}).done(function(o) {
+				$('#latest_content').html(o);
+			});
 		}, 5000);//Delay here = 5 seconds
-	}
-);
-$(document).ready(
-	function() {
-		setInterval(function() {
-		var someval = Math.floor(Math.random() * 100);
-		$('#sample').text('Test' + someval);
-		}, 5000);//Delay here = 5 seconds 
 	}
 );

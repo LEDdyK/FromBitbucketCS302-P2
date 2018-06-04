@@ -1,0 +1,13 @@
+4
+stamp: 000000
+message: That's what I like
+sender: Bruno Mars
+stamp: 000000
+message: I'm going to be the next hokage
+sender: Hank Hill
+stamp: 000000
+message: Sasuke, I can't let you do this
+sender: Naruto
+stamp: 000000
+message: 24 KARAT MAGIC IN THE AIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIR
+sender: Bruno Mars
