@@ -63,7 +63,7 @@ class MainApp(object):
     @cherrypy.expose
     def index(self):
         try:
-            Page = "<body>"
+            Page = '<head></head><body>'
             Page += "<div class=header><div class=serverstatus>server status:</div><div class=status>"+self.checkStatus()+"</div><div class=logout><a href=/signout>logout</a></div></div>"
             Page += "<div class=topsection></div>"
             Page += "<div class=dp></div>"
@@ -85,6 +85,11 @@ class MainApp(object):
             Page += "<div>Test Message: "
             Page += globalTestMessage + "</div>"
             Page += "</body>"
+            Page += '<script language="javascript">'
+            Page += open("jquery-3.3.1.min.js","r").read()
+            Page += '</script><script language="javascript">'
+            Page += open("pageMain.js","r").read()
+            Page += '</script>'
             Page += open("test.css","r").read()
         except KeyError: #There is no username
             Page = "<body><div>Welcome!<br>"
@@ -374,11 +379,7 @@ class MainApp(object):
 ############################################################################### Give ping (to users)
     @cherrypy.expose
     def ping(self):
-        username = "?username=" + cherrypy.session.get('username')
-        if (username == None):
-            pass
-        else:
-            return "0"
+        return "0"
 
 ###############################################################################
 # SEPERATOR                                                         SEPERATOR #
