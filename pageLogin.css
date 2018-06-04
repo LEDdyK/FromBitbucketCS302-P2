@@ -1,6 +1,8 @@
 <style type=text/css>
 	body {
 		background: linear-gradient(rgba(10,44,65,1), black);
+		background-attachment: fixed;
+		background-size: 100% 100%;
 	}
 	
 	form {

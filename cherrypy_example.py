@@ -11,7 +11,9 @@
 #            Python  (We use 2.7)
 
 import cherrypy
+import urllib
 import urllib2
+import urlparse
 import hashlib
 import json
 import threading
@@ -66,16 +68,19 @@ class MainApp(object):
             Page += "<div class=topsection></div>"
             Page += "<div class=dp></div>"
             Page += "<div class=welcome>Hello, " + cherrypy.session['username'] + "!<br></div>"
-            Page += "<div class=textbody>"
-            Page += "<div class=navigation><div class=dash>dashboard</div><div class=users>users</div><div class=groups>groups</div><div class=messages>messages</div></div>"
-            Page += "<div class=board>"
-            Page += "</div>"
-            Page += "<div class=latest>"
-            Page += "</div>"
-            Page += "</div>"
-            Page += "<div class=contacts>"
+            Page += "<div class=textbody><div class=navigation>"
+            Page += "<div class=dash><a href=/>dashboard</a></div>"
+            Page += "<div class=users><a href=/>users</a></div>"
+            Page += "<div class=groups><a href=/>groups</a></div>"
+            Page += "<div class=messages><a href=/>messages</a></div></div>"
+            Page += "<div class=bodybody><div class=board><div id=board_header>Global Message Board</div><div id=board_content>"
+            Page += ''
+            Page += "</div></div><div class=latest><div id=latest_header>Latest Messages</div><div id=latest_content>"
+            Page += ''
+            Page += "</div></div></div></div><div class=contacts>"
+            Page += "<div id=contacts_header>contacts</div><div id=contacts_content>"
             Page += self.getonlineusers()
-            Page += "</div>"
+            Page += "</div></div>"
             #Test purposes
             Page += "<div>Test Message: "
             Page += globalTestMessage + "</div>"
@@ -98,7 +103,7 @@ class MainApp(object):
         else:
             return " offline"
 
-############################################################################### Login
+############################################################################### Login (to server)
     
     @cherrypy.expose
     def login(self):
@@ -139,7 +144,7 @@ class MainApp(object):
         else:
             return 1
 
-############################################################################### Logout
+############################################################################### Logout (of server)
     
     @cherrypy.expose
     def signout(self):
@@ -157,7 +162,7 @@ class MainApp(object):
             cherrypy.lib.sessions.expire()
         raise cherrypy.HTTPRedirect('/')
 
-############################################################################### List Users
+############################################################################### List users (on server)
 
     @cherrypy.expose
     def getallusers(self):
@@ -168,7 +173,7 @@ class MainApp(object):
         html = response.read()
         htmlUsers = html.split(',')
         #display url contents
-        Page = '<br>'
+        Page = ''
         for i in htmlUsers:
             Page += i
             Page += '<br>'
@@ -185,7 +190,9 @@ class MainApp(object):
         html = response.read()
         htmlLines = html.splitlines()
         #display url contents
-        Page = '<br>'
+        Page = ''
+        saveList = open("server/getList.txt","w+")
+        saveList.write(html)
         for i in range(1,len(htmlLines)):
             user = htmlLines[i].split(',')
             if user[0] != cherrypy.session['username']:
@@ -193,18 +200,18 @@ class MainApp(object):
                 Page += '<br>'
         return Page
 
-############################################################################### Report
+############################################################################### Report (to server)
     
     @cherrypy.expose
     def initReport(self):
         global background
-        self.report()
+        self.serverReport()
         #setup online report thread (run after 60 seconds)
         background = threading.Timer(60, self.backgroundReport)
         background.start()
     
     @cherrypy.expose
-    def report(self):
+    def serverReport(self):
         #open url
         API = "/report"
         username = "?username=" + globalUsername
@@ -232,7 +239,7 @@ class MainApp(object):
             #run this every 60 seconds
             time.sleep(60)
 
-############################################################################### Receive Messages
+############################################################################### Receive messages (from users)
 
     @cherrypy.expose
     @cherrypy.tools.json_in()
@@ -269,8 +276,10 @@ class MainApp(object):
             groupID = "noID"
         #Test purposes
         globalTestMessage = sender + " " + destination + " " + message + " " + stamp + " " + str(encoding) + " " + str(encryption) + " " + str(hashing) + " " + hexhash + " " + decryptionKey + " " + groupID
-
-############################################################################### Receive Files
+        messageFile = open("messages/" + sender + ".txt",'a+')
+        messageFile.write(stamp + "\n" + message + "\n")
+        messageFile.close()
+############################################################################### Receive files (from users)
 
     @cherrypy.expose
     @cherrypy.tools.json_in()
@@ -306,7 +315,7 @@ class MainApp(object):
         #Test purposes
         globalTestMessage = sender + " " + destination + " " + base64 + " " + filename + " " + content_type + " " + stamp + " " + str(encryption) + " " + str(hashing) + " " + hexhash + " " + decryptionKey + " " + groupID
 
-############################################################################### Send Messages
+############################################################################### Send messages (to users)
 
     @cherrypy.expose   
     def sendMessage(self):
@@ -320,7 +329,7 @@ class MainApp(object):
         req = urllib2.Request("http://192.168.1.73:10001/receiveMessage", data, {'Content-Type':'application/json'})
         response = urllib2.urlopen(req)
 
-############################################################################### Send Files
+############################################################################### Send files (to users)
 
     @cherrypy.expose   
     def sendMessage(self):
@@ -336,7 +345,7 @@ class MainApp(object):
         req = urllib2.Request("http://192.168.1.73:10001/receiveFile", data, {'Content-Type':'application/json'})
         response = urllib2.urlopen(req)
 
-############################################################################### Profile
+############################################################################### Give profile (to users)
 
     @cherrypy.expose
     def getProfile(self):
@@ -349,6 +358,75 @@ class MainApp(object):
         encoding = 0
         encryption = 0
         decryptionKey = "nokey"
+        output_dict = {
+            "lastUpdated":lastUpdated,
+            "fullname":fullname,
+            "position":position,
+            "description":description,
+            "location":location,
+            "picture":picture,
+            "encoding":encoding,
+            "encryption":encryption,
+            "decryptionKey":decryptionKey
+            }
+        data = json.dumps(output_dict)
+
+############################################################################### Give ping (to users)
+    @cherrypy.expose
+    def ping(self):
+        username = "?username=" + cherrypy.session.get('username')
+        if (username == None):
+            pass
+        else:
+            return "0"
+
+###############################################################################
+# SEPERATOR                                                         SEPERATOR #
+#                                  SEPERATOR                                  #
+# SEPERATOR                                                         SEPERATOR #
+###############################################################################
+
+############################################################################### /getList (from my database)
+
+    @cherrypy.expose
+    def getList(self, json_format="0"):
+        try:
+            getList = open("server/getList.txt", "r")
+        except:
+            return "file not found"
+        if json_format == "1":
+            htmlLines = getList.read().splitlines()
+            output_dict = {}
+            for i in range(1,len(htmlLines)):
+                users = htmlLines[i].split(',')
+                """entry = {
+                    "username"+str(i):users[0],
+                    "location"+str(i):users[1],
+                    "ip"+str(i):users[2],
+                    "port"+str(i):users[3],
+                    "last login in epoch time"+str(i):users[4]
+                    }
+                if len(users)>5:
+                    entry.update({"publicKey"+str(i):users[5]})"""
+                entry = {
+                    users[0]:htmlLine[i]
+                    }
+                output_dict.update(entry)
+            return json.dumps(output_dict)
+        else:
+            return getList.read()
+
+############################################################################### /report (to users)
+
+    @cherrypy.expose
+    def report(self, username, passphrase, signature, location, ip, port, encryption="0"):
+        return "report"
+
+############################################################################### /logoff (from users)
+
+    @cherrypy.expose
+    def logoff(self, username, passphrase, signature, encryption="0"):
+        return "logoff"
     
 ############################################################################### I don't know what this is...
     
