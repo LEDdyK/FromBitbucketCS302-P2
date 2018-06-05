@@ -56,7 +56,12 @@
 		height: 160px;
 		width: 160px;
 		border-radius: 50%;
-		background-image: url("https://image.ibb.co/iW7Ycd/dplkim564.jpg");
+	}
+	
+	.dp img {
+		height: 160px;
+		width: 160px;
+		border-radius: 50%;
 	}
 	
 	.welcome {

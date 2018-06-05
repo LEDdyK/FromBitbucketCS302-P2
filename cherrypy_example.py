@@ -10,6 +10,7 @@
 # Requires:  CherryPy 3.2.2  (www.cherrypy.org)
 #            Python  (We use 2.7)
 
+import base64
 import cherrypy
 import hashlib
 import json
@@ -22,13 +23,13 @@ import urlparse
 
 # The address we listen for connections on
 defURL = "http://cs302.pythonanywhere.com"
-listen_ip = "192.168.1.75"
-listen_port = 10000
+listen_ip = "172.23.154.65"
+listen_port = 10001
 #Through uni wifi
-reportIP = "172.23.133.15"
+reportIP = "172.23.154.65"
 reportLocation = "1"
 #Through home wifi
-#reportIP = "210.55.80.196"
+#reportIP = "192.168.1.75"
 #reportLocation = "2"
 
 #GLOBAL variables
@@ -64,10 +65,13 @@ class MainApp(object):
     @cherrypy.expose
     def index(self):
         try:
+            with open("images/" + cherrypy.session['username'] + ".jpg", "rb") as f:
+                base64img = base64.b64encode(f.read())
             Page = '<head></head><body>'
             Page += "<div class=header><div class=serverstatus>server status:</div><div class=status>"+self.checkStatus()+"</div><div class=logout><a href=/signout>logout</a></div></div>"
             Page += "<div class=topsection></div>"
-            Page += "<div class=dp></div>"
+            Page += "<div class=dp><a href='/viewProfile?profile_username=" + cherrypy.session['username'] + "&sender=" + cherrypy.session['username'] + "'>"
+            Page += '<img src="data:image/jpeg;base64,' + base64img + '"></a></div>'
             Page += "<div class=welcome>Hello, " + cherrypy.session['username'] + "!<br></div>"
             Page += "<div class=textbody><div class=navigation>"
             Page += "<div class=dash><a href=/>dashboard</a></div>"
@@ -408,8 +412,8 @@ class MainApp(object):
 ############################################################################### Give profile (to users)
 
     @cherrypy.expose
-    def getProfile(self,sender,username):
-        proFile = open("server/profile/"+username+".txt", "r")
+    def getProfile(self,profile_username,sender):
+        proFile = open("server/profile/"+profile_username+".txt", "r")
         lastUpdated = str(time.time())
         proFileSeg = proFile.read().split('>>')
         proFile.close()
@@ -417,7 +421,9 @@ class MainApp(object):
         position = proFileSeg[3]
         description = proFileSeg[5]
         location = proFileSeg[7]
-        picture = proFileSeg[9]
+        with open("images/" + profile_username + ".jpg", "rb") as f:
+            base64img = base64.b64encode(f.read())
+        picture = base64img
         encoding = 0
         encryption = 0
         decryptionKey = "nokey"
@@ -438,8 +444,8 @@ class MainApp(object):
 ############################################################################### View profile
 
     @cherrypy.expose
-    def viewProfile(self,sender,username):
-        input_dict = json.loads(self.getProfile(sender,username))
+    def viewProfile(self,profile_username,sender):
+        input_dict = json.loads(self.getProfile(profile_username,sender))
         fullname = input_dict['fullname']
         position = input_dict['position']
         description = input_dict['description']
@@ -471,7 +477,15 @@ class MainApp(object):
         Page += open("profile.css").read()
         return Page
 
+############################################################################### Image Host
+
+    @cherrypy.expose
+    def images(self,image):
+        dp = open("images/"+image)
+        return dp.read()
+
 ############################################################################### Give ping (to users)
+
     @cherrypy.expose
     def ping(self):
         return "0"
