@@ -23,14 +23,14 @@ import urlparse
 
 # The address we listen for connections on
 defURL = "http://cs302.pythonanywhere.com"
-listen_ip = "172.23.154.65"
+listen_ip = "192.168.1.75"
 listen_port = 10001
 #Through uni wifi
-reportIP = "172.23.154.65"
-reportLocation = "1"
+#reportIP = "172.23.154.65"
+#reportLocation = "1"
 #Through home wifi
-#reportIP = "192.168.1.75"
-#reportLocation = "2"
+reportIP = "192.168.1.75"
+reportLocation = "2"
 
 #GLOBAL variables
 globalUsername = "username"
@@ -152,7 +152,7 @@ class MainApp(object):
         Page += '</body>'
         return Page
 
-############################################################################### Login (to server)
+############################################################################### Login (to server) <<tested and works>>
     
     @cherrypy.expose
     def login(self):
@@ -193,7 +193,7 @@ class MainApp(object):
         else:
             return 1
 
-############################################################################### Logout (from server)
+############################################################################### Logout (from server) <<tested and works>>
 
     @cherrypy.expose
     def signout(self):
@@ -211,7 +211,7 @@ class MainApp(object):
             cherrypy.lib.sessions.expire()
         raise cherrypy.HTTPRedirect('/')
 
-############################################################################### Get users (from server)
+############################################################################### Get users (from server) <<tested and works>>
 
     @cherrypy.expose
     def getallusers(self):
@@ -249,7 +249,7 @@ class MainApp(object):
                 Page += '<br>'
         return Page
 
-############################################################################### Report (to server)
+############################################################################### Report (to server) <<tested and works>>
     
     def initReport(self):
         global background
@@ -286,7 +286,7 @@ class MainApp(object):
             #run this every 60 seconds
             time.sleep(60)
 
-############################################################################### Receive messages (from users)
+############################################################################### Receive messages (from users) <<tested and works>>
 
     @cherrypy.expose
     @cherrypy.tools.json_in()
@@ -323,36 +323,7 @@ class MainApp(object):
             groupID = "noID"
         if globalMessage == "0":
             #append appropriate message file (by sender)
-            messageFile = open("messages/" + sender + ".txt",'a+')
-            messageFile.write(str(stamp) + "\n" + message + "\n" + sender + "\n\n")
-            messageFile.close()
-            #append latest
-            line = open("messages/0000.txt").readline()
-            value = int(line)
-            if value == 0:
-                value = 1
-                latest = open("messages/0000.txt",'w')
-                latest.write(str(value) + "\nstamp: " + str(stamp) + "\nmessage: " + message + "\nsender: " + sender + "\n\n")
-            else:
-                value += 1
-                latest = open("messages/0000.txt",'r')
-                lines = latest.read().splitlines()
-                latest.close()
-                latest = open("messages/0000.txt",'w')
-                if value < 11:
-                    latest.write(str(value))
-                else:
-                    latest.write("10")
-                latest.close()
-                latest = open("messages/0000.txt",'a')
-                latest.write("\nstamp: " + str(stamp) + "\nmessage: " + message + "\nsender: " + sender)                
-                if value < 11:
-                    for i in range (1,len(lines)):
-                        latest.write("\n" + lines[i])
-                else:
-                    for i in range (1,len(lines)-3):
-                        latest.write("\n" + lines[i])
-            latest.close()
+            self.appendFile(str(stamp), sender, message)
         else:
             #append global message file
             messageFile = open("messages/1111.txt",'r')
@@ -362,7 +333,40 @@ class MainApp(object):
             messageFile.write(str(stamp) + "\n" + message + "\nsender: " + sender + "\n\n")
             messageFile.write(temp)
             messageFile.close()
-        return 0
+        return "0"
+
+############################################################################### Append message (to my database)
+
+    def appendFile(self, stamp, sender, message):
+        messageFile = open("messages/" + sender + ".txt",'a+')
+        messageFile.write(stamp + "\n" + message + "\n" + sender + "\n\n")
+        messageFile.close()
+        line = open("messages/0000.txt").readline()
+        value = int(line)
+        if value == 0:
+            value = 1
+            latest = open("messages/0000.txt",'w')
+            latest.write(str(value) + "\nstamp: " + stamp + "\nmessage: " + message + "\nsender: " + sender + "\n")
+        else:
+            value += 1
+            latest = open("messages/0000.txt",'r')
+            lines = latest.read().splitlines()
+            latest.close()
+            latest = open("messages/0000.txt",'w')
+            if value < 11:
+                latest.write(str(value))
+            else:
+                latest.write("10")
+            latest.close()
+            latest = open("messages/0000.txt",'a')
+            latest.write("\nstamp: " + str(stamp) + "\nmessage: " + message + "\nsender: " + sender)                
+            if value < 11:
+                for i in range (1,len(lines)):
+                    latest.write("\n" + lines[i])
+            else:
+                for i in range (1,len(lines)-3):
+                    latest.write("\n" + lines[i])
+        latest.close()
 
 ############################################################################### Get latest messages (from my database)
 
@@ -388,7 +392,7 @@ class MainApp(object):
             output += lines[i] + "<br>"
         return output
         
-############################################################################### Receive files (from users)
+############################################################################### Receive files (from users) <<tested and works>>
 
     @cherrypy.expose
     @cherrypy.tools.json_in()
@@ -420,15 +424,15 @@ class MainApp(object):
             groupID = input_dict['groupID']
         except KeyError:
             groupID = "noID"
-            
+        #append appropriate message file (by sender) with file tag
+        self.appendFile(str(stamp), sender, "<<file/type="+content_type+">><<messages/receivedfiles/"+filename)
         item = base64.b64decode(base64file)
         f = open("messages/receivedfiles/"+filename,'wb')
         f.write(item)
-        f.close
-        print base64.b64decode(base64file)
-    return 0
+        f.close()
+        return "0"
         
-############################################################################### Send messages (to users)
+############################################################################### Send messages (to users) <<tested and works>>
    
     @cherrypy.expose
     def sendMessage(self,ip,port,receiver,message):
@@ -443,7 +447,7 @@ class MainApp(object):
         response = urllib2.urlopen(req)
         raise cherrypy.HTTPRedirect('/messages')
 
-############################################################################### Send files (to users)
+############################################################################### Send files (to users) <<tested and works>>
 
     @cherrypy.expose
     def sendFile(self,ip,port,receiver,filename,filepath,filetype):
@@ -462,7 +466,7 @@ class MainApp(object):
         response = urllib2.urlopen(req)
         raise cherrypy.HTTPRedirect('/messages')
 
-############################################################################### Give profile (to users)
+############################################################################### Give profile (to users) <<tested and works>>
 
     @cherrypy.expose
     @cherrypy.tools.json_in()
@@ -498,7 +502,7 @@ class MainApp(object):
         data = json.dumps(output_dict)
         return data
 
-############################################################################### View profile
+############################################################################### View profile <<tested and works>>
 
     @cherrypy.expose
     def viewProfile(self,profile_username,sender,ip,port):
