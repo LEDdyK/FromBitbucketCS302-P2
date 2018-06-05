@@ -60,6 +60,8 @@ class MainApp(object):
 #                                  SEPERATOR                                  #
 # SEPERATOR                                                         SEPERATOR #
 ###############################################################################
+
+############################################################################### Main Page
  
     # PAGES (which return HTML that can be viewed in browser)
     @cherrypy.expose
@@ -70,14 +72,14 @@ class MainApp(object):
             Page = '<head></head><body>'
             Page += "<div class=header><div class=serverstatus>server status:</div><div class=status>"+self.checkStatus()+"</div><div class=logout><a href=/signout>logout</a></div></div>"
             Page += "<div class=topsection></div>"
-            Page += "<div class=dp><a href='/viewProfile?profile_username=" + cherrypy.session['username'] + "&sender=" + cherrypy.session['username'] + "'>"
+            Page += "<div class=dp><a href='/viewProfile?profile_username=" + cherrypy.session['username'] + "&sender=" + cherrypy.session['username'] + "&ip=" + listen_ip + "&port=" + str(listen_port) + "'>"
             Page += '<img src="data:image/jpeg;base64,' + base64img + '"></a></div>'
             Page += "<div class=welcome>Hello, " + cherrypy.session['username'] + "!<br></div>"
             Page += "<div class=textbody><div class=navigation>"
             Page += "<div class=dash><a href=/>dashboard</a></div>"
             Page += "<div class=users><a href=/>users</a></div>"
             Page += "<div class=groups><a href=/>groups</a></div>"
-            Page += "<div class=messages><a href=/>messages</a></div></div>"
+            Page += "<div class=messages><a href=/messages>messages</a></div></div>"
             Page += "<div class=bodybody><div class=board><div id=board_header>Global Message Board</div><div id=board_content>"+self.getBoard()
             Page += "</div></div><div class=latest><div id=latest_header>Latest Messages</div><div id=latest_content>"+self.getLatest()
             Page += "</div></div></div></div><div class=contacts>"
@@ -112,6 +114,43 @@ class MainApp(object):
             return " online"
         else:
             return " offline"
+
+############################################################################### Messages Page
+
+    @cherrypy.expose
+    def messages(self):
+        Page = '<head></head><body>'
+        Page += '<div class=formMessage>'
+        Page += '<form action="/sendMessage">'
+        Page += 'IP:<br>'
+        Page += '<input type="text" name="ip"><br>'
+        Page += 'port:<br>'
+        Page += '<input type="text" name="port"><br>'
+        Page += 'Receiver (username):<br>'
+        Page += '<input type="text" name="receiver"><br>'
+        Page += 'Message:<br>'
+        Page += '<input type="text" name="message"><br><br>'
+        Page += '<input type="submit" value="send"><br>'
+        Page += '</form></div><br><br><br><br>'
+        Page += '<div class=formFile>'
+        Page += '<form action="/sendFile">'
+        Page += 'IP:<br>'
+        Page += '<input type="text" name="ip"><br>'
+        Page += 'port:<br>'
+        Page += '<input type="text" name="port"><br>'
+        Page += 'Receiver (username):<br>'
+        Page += '<input type="text" name="receiver"><br>'
+        Page += 'filename:<br>'
+        Page += '<input type="text" name="filename"><br>'
+        Page += 'filepath:<br>'
+        Page += '<input type="text" name="filepath"><br>'
+        Page += 'filetype:<br>'
+        Page += '<input type="text" name="filetype"><br>'
+        Page += '<input type="submit" value="send"><br>'
+        Page += '</form>'
+        Page += '</div>'
+        Page += '</body>'
+        return Page
 
 ############################################################################### Login (to server)
     
@@ -285,7 +324,7 @@ class MainApp(object):
         if globalMessage == "0":
             #append appropriate message file (by sender)
             messageFile = open("messages/" + sender + ".txt",'a+')
-            messageFile.write(stamp + "\n" + message + "\n")
+            messageFile.write(str(stamp) + "\n" + message + "\n" + sender + "\n\n")
             messageFile.close()
             #append latest
             line = open("messages/0000.txt").readline()
@@ -293,7 +332,7 @@ class MainApp(object):
             if value == 0:
                 value = 1
                 latest = open("messages/0000.txt",'w')
-                latest.write(str(value) + "\nstamp: " + stamp + "\nmessage: " + message + "\nsender: " + sender + "\n\n")
+                latest.write(str(value) + "\nstamp: " + str(stamp) + "\nmessage: " + message + "\nsender: " + sender + "\n\n")
             else:
                 value += 1
                 latest = open("messages/0000.txt",'r')
@@ -306,7 +345,7 @@ class MainApp(object):
                     latest.write("10")
                 latest.close()
                 latest = open("messages/0000.txt",'a')
-                latest.write("\nstamp: " + stamp + "\nmessage: " + message + "\nsender: " + sender)                
+                latest.write("\nstamp: " + str(stamp) + "\nmessage: " + message + "\nsender: " + sender)                
                 if value < 11:
                     for i in range (1,len(lines)):
                         latest.write("\n" + lines[i])
@@ -320,9 +359,10 @@ class MainApp(object):
             temp = messageFile.read()
             messageFile.close()
             messageFile = open("messages/1111.txt",'w+')
-            messageFile.write(stamp + "\n" + message + "\nsender: " + sender + "\n\n")
+            messageFile.write(str(stamp) + "\n" + message + "\nsender: " + sender + "\n\n")
             messageFile.write(temp)
             messageFile.close()
+        return 0
 
 ############################################################################### Get latest messages (from my database)
 
@@ -356,7 +396,7 @@ class MainApp(object):
         input_dict = cherrypy.request.json
         sender = input_dict['sender']
         destination = input_dict['destination']
-        base64 = input_dict['file']
+        base64file = input_dict['file']
         filename = input_dict['filename']
         content_type = input_dict['content_type']
         stamp = input_dict['stamp']
@@ -380,39 +420,58 @@ class MainApp(object):
             groupID = input_dict['groupID']
         except KeyError:
             groupID = "noID"
+            
+        item = base64.b64decode(base64file)
+        f = open("messages/receivedfiles/"+filename,'wb')
+        f.write(item)
+        f.close
+        print base64.b64decode(base64file)
+    return 0
         
 ############################################################################### Send messages (to users)
    
-    def sendMessage(self):
+    @cherrypy.expose
+    def sendMessage(self,ip,port,receiver,message):
         output_dict = {
-            "sender":"Lite Kim",
-            "destination":"Somewhere",
-            "message":"Hi",
-            "stamp":str(time.time())
+            "sender":cherrypy.session['username'],
+            "destination":receiver,
+            "message":message,
+            "stamp":time.time()
             }
         data = json.dumps(output_dict)
-        req = urllib2.Request("http://192.168.1.73:10001/receiveMessage", data, {'Content-Type':'application/json'})
+        req = urllib2.Request("http://"+ip+":"+port+"/receiveMessage", data, {'Content-Type':'application/json'})
         response = urllib2.urlopen(req)
+        raise cherrypy.HTTPRedirect('/messages')
 
 ############################################################################### Send files (to users)
 
-    def sendFile(self):
+    @cherrypy.expose
+    def sendFile(self,ip,port,receiver,filename,filepath,filetype):
+        with open(filepath, "rb") as f:
+            base64file = base64.b64encode(f.read())
         output_dict = {
-            "sender":"Lite Kim",
-            "destination":"Somewhere",
-            "base64":"Hi",
-            "filename":"filename",
-            "content_type":"content_type",
-            "stamp":str(time.time())
+            "sender":cherrypy.session['username'],
+            "destination":receiver,
+            "file":base64file,
+            "filename":filename,
+            "content_type":filetype,
+            "stamp":time.time()
             }
         data = json.dumps(output_dict)
-        req = urllib2.Request("http://192.168.1.73:10001/receiveFile", data, {'Content-Type':'application/json'})
+        req = urllib2.Request("http://"+ip+":"+port+"/receiveFile", data, {'Content-Type':'application/json'})
         response = urllib2.urlopen(req)
+        raise cherrypy.HTTPRedirect('/messages')
 
 ############################################################################### Give profile (to users)
 
     @cherrypy.expose
-    def getProfile(self,profile_username,sender):
+    @cherrypy.tools.json_in()
+    def getProfile(self):
+
+        input_dict = cherrypy.request.json
+        profile_username = input_dict['profile_username']
+        sender = input_dict['sender']
+        
         proFile = open("server/profile/"+profile_username+".txt", "r")
         lastUpdated = str(time.time())
         proFileSeg = proFile.read().split('>>')
@@ -421,9 +480,7 @@ class MainApp(object):
         position = proFileSeg[3]
         description = proFileSeg[5]
         location = proFileSeg[7]
-        with open("images/" + profile_username + ".jpg", "rb") as f:
-            base64img = base64.b64encode(f.read())
-        picture = base64img
+        picture = proFileSeg[9]
         encoding = 0
         encryption = 0
         decryptionKey = "nokey"
@@ -444,17 +501,38 @@ class MainApp(object):
 ############################################################################### View profile
 
     @cherrypy.expose
-    def viewProfile(self,profile_username,sender):
-        input_dict = json.loads(self.getProfile(profile_username,sender))
-        fullname = input_dict['fullname']
-        position = input_dict['position']
-        description = input_dict['description']
-        desLines = description.split('\n')
-        newDes = ''
-        for i in desLines:
-            newDes += i + '<br>'
-        location = input_dict['location']
-        picture = input_dict['picture']
+    def viewProfile(self,profile_username,sender,ip,port):
+
+        output_dict = {
+            "profile_username":profile_username,
+            "sender":sender
+            }
+        
+        data = json.dumps(output_dict)
+        req = urllib2.Request("http://"+ip+":"+port+"/getProfile", data, {'Content-Type':'application/json'})
+        response = urllib2.urlopen(req)
+        input_dict = json.loads(response.read())
+        try:
+            fullname = input_dict['fullname']
+        except KeyError:
+            fullname = "no name"
+        try:
+            position = input_dict['position']
+        except KeyError:
+            position = "no position"
+        try:
+            description = input_dict['description']
+            try:
+                desLines = description.split('\n')
+                newDes = ''
+                for i in desLines:
+                    newDes += i + '<br>'
+                    location = input_dict['location']
+                    picture = input_dict['picture']
+            except:
+                newDes = ''
+        except KeyError:
+            description = "no description"
         try:
             encoding = input_dict['encoding']
         except KeyError:
