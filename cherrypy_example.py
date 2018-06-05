@@ -56,9 +56,9 @@ class MainApp(object):
         return Page
     
 ###############################################################################
-# SEPERATOR                                                         SEPERATOR #
-#                                  SEPERATOR                                  #
-# SEPERATOR                                                         SEPERATOR #
+# SEPARATOR                                                         SEPARATOR #
+#                                  SEPARATOR                                  #
+# SEPARATOR                                                         SEPARATOR #
 ###############################################################################
 
 ############################################################################### Main Page
@@ -339,33 +339,36 @@ class MainApp(object):
 
     def appendFile(self, stamp, sender, message):
         messageFile = open("messages/" + sender + ".txt",'a+')
-        messageFile.write(stamp + "\n" + message + "\n" + sender + "\n\n")
+        messageFile.write("stamp: "+stamp+"[[separator]]message: "+message+"[[separator]]sender: "+sender+"[[separatorEND]]") 
         messageFile.close()
-        line = open("messages/0000.txt").readline()
-        value = int(line)
+        latest = open("messages/0000.txt",'r')
+        segments = latest.read().split('[[INITseparator]]')
+        latest.close()
+        value = int(segments[0])
         if value == 0:
             value = 1
             latest = open("messages/0000.txt",'w')
-            latest.write(str(value) + "\nstamp: " + stamp + "\nmessage: " + message + "\nsender: " + sender + "\n")
+            latest.write(str(value)+"[[INITseparator]]stamp: "+stamp+"[[separator]]message: "+message+"[[separator]]sender: "+sender+"[[separatorEND]]")
         else:
             value += 1
+            #copy contents to temp (split_contents)
             latest = open("messages/0000.txt",'r')
-            lines = latest.read().splitlines()
+            split_contents = latest.read().split('[[INITseparator]]')
             latest.close()
+            #overwrite with value first then new message then copied contents
             latest = open("messages/0000.txt",'w')
             if value < 11:
-                latest.write(str(value))
+                # value + new message + copied message(s)
+                latest.write(str(value)+"[[INITseparator]]stamp: "+stamp+"[[separator]]message: "+message+"[[separator]]sender: "+sender+"[[separatorEND]]"+split_contents[1])
             else:
-                latest.write("10")
-            latest.close()
-            latest = open("messages/0000.txt",'a')
-            latest.write("\nstamp: " + str(stamp) + "\nmessage: " + message + "\nsender: " + sender)                
-            if value < 11:
-                for i in range (1,len(lines)):
-                    latest.write("\n" + lines[i])
-            else:
-                for i in range (1,len(lines)-3):
-                    latest.write("\n" + lines[i])
+                # value + new message
+                latest.write("10[[INITseparator]]stamp: "+stamp+"[[separator]]message: "+message+"[[separator]]sender: "+sender+"[[separatorEND]]")
+                latest.close()
+                # + 9 latest messages (remove the oldest)
+                contents = split_contents[1].split("[[separatorEND]]")
+                latest = open("messages/0000.txt",'a')
+                for i in range (0,9):
+                    latest.write(contents[i]+"[[separatorEND]]")
         latest.close()
 
 ############################################################################### Get latest messages (from my database)
@@ -373,11 +376,13 @@ class MainApp(object):
     @cherrypy.expose
     def getLatest(self):
         latest = open("messages/0000.txt",'r')
-        lines = latest.read().splitlines()
+        first_split = latest.read().split('[[INITseparator]]')
         latest.close()
+        sec_split = first_split[1].split('[[separatorEND]]')
         output = ''
-        for i in range (1,len(lines)):
-            output += lines[i] + "<br>"
+        for i in range (0,int(first_split[0])):
+            lines = sec_split[i].split('[[separator]]')
+            output += lines[0] + "<br>" + lines[1] + "<br>" + lines[2] + "<br><br>"
         return output
 
 ############################################################################### Get global messages (from my database)
@@ -425,7 +430,7 @@ class MainApp(object):
         except KeyError:
             groupID = "noID"
         #append appropriate message file (by sender) with file tag
-        self.appendFile(str(stamp), sender, "<<file/type="+content_type+">><<messages/receivedfiles/"+filename)
+        self.appendFile(str(stamp), sender, "{{file/type="+content_type+"}}{{messages/receivedfiles/"+filename+"}}")
         item = base64.b64decode(base64file)
         f = open("messages/receivedfiles/"+filename,'wb')
         f.write(item)
@@ -573,9 +578,9 @@ class MainApp(object):
         return "0"
 
 ###############################################################################
-# SEPERATOR                                                         SEPERATOR #
-#                                  SEPERATOR                                  #
-# SEPERATOR                                                         SEPERATOR #
+# SEPARATOR                                                         SEPARATOR #
+#                                  SEPARATOR                                  #
+# SEPARATOR                                                         SEPARATOR #
 ###############################################################################
 
 ############################################################################### /getList (from my database)
@@ -628,9 +633,9 @@ class MainApp(object):
         return str(output)
 
 ###############################################################################
-# SEPERATOR                                                         SEPERATOR #
-#                                  SEPERATOR                                  #
-# SEPERATOR                                                         SEPERATOR #
+# SEPARATOR                                                         SEPARATOR #
+#                                  SEPARATOR                                  #
+# SEPARATOR                                                         SEPARATOR #
 ###############################################################################
 
 def runMainApp():
