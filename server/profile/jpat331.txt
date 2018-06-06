@@ -1,0 +1,5 @@
+<<fullname>>Jigar Patel>>
+<<position>>no position>>
+<<description>>random description>>
+<<location>>uni>>
+<<picture>>https://i.imgur.com/vt1Bu3m.jpg

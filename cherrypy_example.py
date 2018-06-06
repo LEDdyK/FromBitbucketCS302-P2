@@ -64,7 +64,6 @@ class MainApp(object):
 
 ############################################################################### Main Page
  
-    # PAGES (which return HTML that can be viewed in browser)
     @cherrypy.expose
     def index(self):
         try:
@@ -105,6 +104,7 @@ class MainApp(object):
         return Page
 
     @cherrypy.expose
+    #check the server status
     def checkStatus(self):
         API = "/listAPI"
         response = urllib2.urlopen(defURL + API)
@@ -155,6 +155,7 @@ class MainApp(object):
 ############################################################################### Login (to server) <<tested and works>>
     
     @cherrypy.expose
+    #logging in to the login server
     def login(self):
         Page = '<body><form action="/signin" method="post" enctype="multipart/form-data">'
         Page += '<div class=username>Username:<br><input type="text" name="username"/></div>'
@@ -164,6 +165,7 @@ class MainApp(object):
         return Page
     
     @cherrypy.expose
+    #logging global variables
     def signin(self, username=None, password=None):
         global globalUsername
         global globalHashedPass
@@ -299,8 +301,8 @@ class MainApp(object):
     def initReport(self):
         global background
         self.serverReport()
-        #setup online report thread (run after 60 seconds)
-        background = threading.Timer(60, self.backgroundReport)
+        #setup online report thread (run every 10 seconds)
+        background = threading.Timer(10, self.backgroundReport)
         background.start()
     
     def serverReport(self):
@@ -328,10 +330,10 @@ class MainApp(object):
             enc = ""
             response = urllib2.urlopen(defURL + API + username + password + ip + port + location + pubkey + enc)
             print "report sent"
-            #run this every 60 seconds
-            time.sleep(60)
+            #run this every 10 seconds
+            time.sleep(10)
             try:
-                stillOnline = urllib2.urlopen('http://'+listen_ip+str(listen_port)+'/getOnline').read()
+                stillOnline = urllib2.urlopen('http://'+listen_ip+':'+str(listen_port)+'/getOnline').read()
                 if stillOnline != "0":
                     self.signout()
             except:
@@ -352,7 +354,7 @@ class MainApp(object):
         sender = input_dict['sender']
         destination = input_dict['destination']
         message = input_dict['message']
-        stamp = input_dict['stamp']
+        stamp = input_dict['stamp']        
         try:
             encoding = input_dict['encoding']
         except KeyError:
@@ -378,6 +380,11 @@ class MainApp(object):
         except KeyError:
             groupID = "noID"
         if globalMessage == "0":
+            #check messaging rate first. Set the limit as 7 messages per minute
+            checkRate = self.limitRate(sender, '7', stamp)
+            if checkRate == "11":
+                #If limit has been reached, return to the user the rate limit error code (11)
+                return checkRate
             #append appropriate message file (by sender)
             self.appendFile(str(stamp), sender, message)
         else:
@@ -516,6 +523,11 @@ class MainApp(object):
             groupID = input_dict['groupID']
         except KeyError:
             groupID = "noID"
+        #check messaging rate first. Set the limit as 7 messages per minute
+        checkRate = self.limitRate(sender, '7', stamp)
+        if checkRate == "11":
+            #If limit has been reached, return to the user the rate limit error code (11)
+            return checkRate
         #append appropriate message file (by sender) with file tag
         self.appendFile(str(stamp), sender, "{{file/type="+content_type+"}}{{messages/receivedfiles/"+filename+"}}")
         item = base64.b64decode(base64file)
@@ -726,6 +738,27 @@ class MainApp(object):
         cleanr = re.compile('<.*?>')
         cleantext = re.sub(cleanr, '', text)
         return cleantext
+
+############################################################################### Rate limiting
+
+    def limitRate(self, sender, limit, stamp):
+        #don't let anyone send you more than 7 messages within a minute
+        #return 0 if limit not reached, else return 1
+        messageFile = open('messages/'+sender+'.txt','r').read()
+        splitMessages = messageFile.split('[[separatorEND]]')
+        #if there are less than limit, free pass
+        if len(splitMessages) < int(limit):
+            return "0"
+        #else the limit has been reached
+        monitorMessage = splitMessages[len(splitMessages)-int(limit)-1]
+        monitorStamp = monitorMessage.split('[[separator]]')
+        justStamp = float(monitorStamp[0].split(" ")[1])
+        #compare if current time is less than 60s + message sent (limit) times ago
+        if float(stamp) < (justStamp+60):
+            #conveniently return the error code
+            return "11"
+        #else more than a minute has passed and allow new message
+        return "0"
 
 ############################################################################### Give ping (to users)
 
