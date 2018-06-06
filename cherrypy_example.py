@@ -119,7 +119,7 @@ class MainApp(object):
 ############################################################################### Messages Page
 
     @cherrypy.expose
-    def messages(self,user="1111"):
+    def messages(self,user="1111",sent='1'):
         Page = '<head></head><body>'
         Page += '<div class=formMessage>'
         Page += '<form action="/sendMessage">'
@@ -141,6 +141,8 @@ class MainApp(object):
         Page += '<input type="text" name="filetype"><br>'
         Page += '<input type="submit" value="send"><br>'
         Page += '</form>'
+        if sent == '0':
+            Page += '<div>Message sent successfully</div>'
         Page += '</div>'
         Page += '<div id="messagePanel">'
         try:
@@ -565,8 +567,16 @@ class MainApp(object):
             }
         data = json.dumps(output_dict)
         req = urllib2.Request("http://"+ip+":"+port+"/receiveMessage", data, {'Content-Type':'application/json'})
-        response = urllib2.urlopen(req)
-        raise cherrypy.HTTPRedirect('/messages?user='+receiver)
+        try:
+            response = urllib2.urlopen(req)
+            confirm = response.read()
+            if confirm == '0':
+                yesconfirm = '0'
+            else:
+                yesconfirm = '1'
+        except:
+            yesconfirm = '1'
+        raise cherrypy.HTTPRedirect('/messages?user='+receiver+'&sent='+yesconfirm)
 
 ############################################################################### Send files (to users) <<tested and works>>
 

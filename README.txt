@@ -1,3 +1,9 @@
+Supported Nodes
+DFU987
+GXU630
+HYAN506
+JPAT331
+
 Instructions for running
 
 1.
