@@ -186,5 +186,8 @@
 		word-wrap: break-word;
 		color: white;
 	}
+	#latest_content img {
+		max-width: 580px;
+	}
 	
 </style>

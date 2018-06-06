@@ -15,6 +15,7 @@ import cherrypy
 import hashlib
 import json
 import os
+import re
 import threading
 import time
 import urllib
@@ -23,14 +24,14 @@ import urlparse
 
 # The address we listen for connections on
 defURL = "http://cs302.pythonanywhere.com"
-listen_ip = "192.168.1.75"
+listen_ip = "172.23.154.65"
 listen_port = 10001
 #Through uni wifi
-#reportIP = "172.23.154.65"
-#reportLocation = "1"
+reportIP = "172.23.154.65"
+reportLocation = "1"
 #Through home wifi
-reportIP = "192.168.1.75"
-reportLocation = "2"
+#reportIP = "192.168.1.75"
+#reportLocation = "2"
 
 #GLOBAL variables
 globalUsername = "username"
@@ -84,7 +85,7 @@ class MainApp(object):
             Page += "</div></div><div class=latest><div id=latest_header>Latest Messages</div><div id=latest_content>"+self.getLatest()
             Page += "</div></div></div></div><div class=contacts>"
             Page += "<div id=contacts_header>contacts</div><div id=contacts_content>"
-            Page += self.getonlineusers()
+            Page += self.getonlineusers('username')
             Page += "</div></div>"
             #Test purposes
             Page += "<div>Test Message: "
@@ -120,12 +121,9 @@ class MainApp(object):
     @cherrypy.expose
     def messages(self):
         Page = '<head></head><body>'
+        #Page += '<div class=userbuttons></div>
         Page += '<div class=formMessage>'
         Page += '<form action="/sendMessage">'
-        Page += 'IP:<br>'
-        Page += '<input type="text" name="ip"><br>'
-        Page += 'port:<br>'
-        Page += '<input type="text" name="port"><br>'
         Page += 'Receiver (username):<br>'
         Page += '<input type="text" name="receiver"><br>'
         Page += 'Message:<br>'
@@ -134,10 +132,6 @@ class MainApp(object):
         Page += '</form></div><br><br><br><br>'
         Page += '<div class=formFile>'
         Page += '<form action="/sendFile">'
-        Page += 'IP:<br>'
-        Page += '<input type="text" name="ip"><br>'
-        Page += 'port:<br>'
-        Page += '<input type="text" name="port"><br>'
         Page += 'Receiver (username):<br>'
         Page += '<input type="text" name="receiver"><br>'
         Page += 'filename:<br>'
@@ -149,7 +143,13 @@ class MainApp(object):
         Page += '<input type="submit" value="send"><br>'
         Page += '</form>'
         Page += '</div>'
+        Page += '<div id="contacts_content"></div>'
         Page += '</body>'
+        Page += '<script language="javascript">'
+        Page += open("jquery-3.3.1.min.js","r").read()
+        Page += '</script><script language="javascript">'
+        Page += open("test2.js","r").read()
+        Page += '</script>'
         return Page
 
 ############################################################################### Login (to server) <<tested and works>>
@@ -214,13 +214,35 @@ class MainApp(object):
 ############################################################################### Get users (from server) <<tested and works>>
 
     @cherrypy.expose
+    def make_buttons(self):
+        userList = self.getallusers().split('<br>')
+        Page = ''
+        Page += '<body>'
+        Page += "<div id=ip>" + listen_ip + "</div><div id=port>" + str(listen_port) + "</div>"
+        for i in range (0, len(userList)-1):
+            Page += '<button id=' + userList[i] + ' type="button" onclick="autofill()" disabled>' + userList[i] + '</button><br>'
+        Page += '<div class=test>testing</div>'
+        Page += '</body>'
+        Page += '<script language="javascript">'
+        Page += open("jquery-3.3.1.min.js","r").read()
+        Page += '</script><script language="javascript">'
+        Page += open("messages.js","r").read()
+        Page += '</script>'
+        return Page
+
+############################################################################### Get users (from server) <<tested and works>>
+
+    @cherrypy.expose
     def getallusers(self):
         #open url
         API = "/listUsers"
         response = urllib2.urlopen(defURL + API)
         #get url contents
         html = response.read()
+        response.close()
+        html = self.cleanHTML(html)
         htmlUsers = html.split(',')
+        htmlUsers.sort()
         #display url contents
         Page = ''
         for i in htmlUsers:
@@ -229,7 +251,7 @@ class MainApp(object):
         return Page
         
     @cherrypy.expose
-    def getonlineusers(self):
+    def getonlineusers(self,item):
         #open url
         API = "/getList"
         username = "?username=" + cherrypy.session['username']
@@ -237,6 +259,10 @@ class MainApp(object):
         response = urllib2.urlopen(defURL + API + username + password)
         #get url contents
         html = response.read()
+        response.close()
+        html = self.cleanHTML(html)
+        if item == 'all':
+            return html
         htmlLines = html.splitlines()
         #display url contents
         Page = ''
@@ -245,8 +271,27 @@ class MainApp(object):
         for i in range(1,len(htmlLines)):
             user = htmlLines[i].split(',')
             if user[0] != cherrypy.session['username']:
-                Page += user[0]
-                Page += '<br>'
+                if item == 'username':
+                    Page += user[0]
+                    Page += '<br>'
+                elif item == 'location':
+                    Page += user[1]
+                    Page += '<br>'
+                elif item == 'ip':
+                    Page += user[2]
+                    Page += '<br>'
+                elif item == 'port':
+                    Page += user[3]
+                    Page += '<br>'
+                elif item == 'time':
+                    Page += user[4]
+                    Page += '<br>'
+                elif item == 'pubKey':
+                    try:
+                        Page += user[5]
+                    except:
+                        Page += 'Key Unavailable'
+                    Page += '<br>'
         return Page
 
 ############################################################################### Report (to server) <<tested and works>>
@@ -338,6 +383,9 @@ class MainApp(object):
 ############################################################################### Append message (to my database)
 
     def appendFile(self, stamp, sender, message):
+        stamp = self.cleanHTML(stamp)
+        sender = self.cleanHTML(sender)
+        message = self.cleanHTML(message)
         messageFile = open("messages/" + sender + ".txt",'a+')
         messageFile.write("stamp: "+stamp+"[[separator]]message: "+message+"[[separator]]sender: "+sender+"[[separatorEND]]") 
         messageFile.close()
@@ -382,7 +430,35 @@ class MainApp(object):
         output = ''
         for i in range (0,int(first_split[0])):
             lines = sec_split[i].split('[[separator]]')
-            output += lines[0] + "<br>" + lines[1] + "<br>" + lines[2] + "<br><br>"
+            output += lines[0] + "<br>"
+            output += self.embbedObjects(lines[1],False)
+            output += lines[1] + "<br>" + lines[2] + "<br><br>"
+        return output
+
+############################################################################### Embbed pictures/audio/video/pdf
+
+    def embbedObjects(self,line,condition):
+        output = ''
+        if "{{file/type=" in line:
+            file_split1 = line.split('file/type=')
+            file_split2 = file_split1[1].split('}}{{')
+            mime = file_split2[0]
+            tp = mime.split('/')[0]
+            ex = mime.split('/')[1]
+            file_split3 = file_split2[1].split('}}')
+            path = file_split3[0]
+            with open(path, "rb") as f:
+                base64file = base64.b64encode(f.read())
+            if tp == 'image':
+                output += '<img src="data:'+mime+';base64,'+base64file+'"><br>'
+            #The following should only be allowed if the section does not refresh itself (condition = true if no refresh)
+            elif condition:
+                if tp == 'audio':
+                    output += '<audio controls><source src="data:'+mime+';base64,'+base64file+'"></audio><br>'
+                elif tp == 'video':
+                    output += '<video width="580" controls><source src="data:'+mime+';base64,'+base64file+'"></video><br>'
+                elif mime == 'application/pdf':
+                    output += '<iframe "width:580" src="data:'+mime+';base64,'+base64file+'"><br>'
         return output
 
 ############################################################################### Get global messages (from my database)
@@ -440,7 +516,15 @@ class MainApp(object):
 ############################################################################### Send messages (to users) <<tested and works>>
    
     @cherrypy.expose
-    def sendMessage(self,ip,port,receiver,message):
+    def sendMessage(self,receiver,message):
+        alldetails = self.getonlineusers('all')
+        individuals = alldetails.splitlines()
+        for i in range (1,len(individuals)):
+            detail = individuals[i].split(',')
+            if receiver == detail[0]:
+                ip = detail[2]
+                port = detail[3]
+                
         output_dict = {
             "sender":cherrypy.session['username'],
             "destination":receiver,
@@ -455,7 +539,14 @@ class MainApp(object):
 ############################################################################### Send files (to users) <<tested and works>>
 
     @cherrypy.expose
-    def sendFile(self,ip,port,receiver,filename,filepath,filetype):
+    def sendFile(self,receiver,filename,filepath,filetype):
+        alldetails = self.getonlineusers('all')
+        individuals = alldetails.splitlines()
+        for i in range (1,len(individuals)):
+            detail = individuals[i].split(',')
+            if receiver == detail[0]:
+                ip = detail[2]
+                port = detail[3]
         with open(filepath, "rb") as f:
             base64file = base64.b64encode(f.read())
         output_dict = {
@@ -530,18 +621,24 @@ class MainApp(object):
         except KeyError:
             position = "no position"
         try:
-            description = input_dict['description']
+            description = self.cleanHTML(input_dict['description'])
             try:
                 desLines = description.split('\n')
                 newDes = ''
                 for i in desLines:
                     newDes += i + '<br>'
-                    location = input_dict['location']
-                    picture = input_dict['picture']
             except:
                 newDes = ''
         except KeyError:
             description = "no description"
+        try:
+            location = input_dict['location']
+        except KeyError:
+            location = "nolocation"
+        try:
+            picture = input_dict['picture']
+        except KeyError:
+            picture = "nopicture"
         try:
             encoding = input_dict['encoding']
         except KeyError:
@@ -555,21 +652,69 @@ class MainApp(object):
         except KeyError:
             decryptionKey = "nokey"
         Page = "<body>"
-        Page += "<div class=fullname><div id=fullname_header>Fullname</div><div id=fullname_content>"+fullname+"</div></div>"
-        Page += "<div class=position><div id=position_header>Position</div><div id=position_content>"+position+"</div></div>"
+        Page += "<div class=fullname><div id=fullname_header>Fullname</div><div id=fullname_content>"+self.cleanHTML(fullname)+"</div></div>"
+        Page += "<div class=position><div id=position_header>Position</div><div id=position_content>"+self.cleanHTML(position)+"</div></div>"
         Page += "<div class=description><div id=description_header>Description</div><div id=description_content>"+newDes+"</div></div>"
-        Page += "<div class=location><div id=location_header>Location</div><div id=location_content>"+location+"</div></div>"
-        Page += "<div class=picture><div id=picture_header>Picture</div><div id=picture_content>"+picture+"</div></div>"
+        Page += "<div class=location><div id=location_header>Location</div><div id=location_content>"+self.cleanHTML(location)+"</div></div>"
+        Page += '<div class=picture><div id=picture_header>Picture</div><div id=picture_content><img src="'+self.cleanHTML(picture)+'"></div></div>'
         Page += "</body>"
         Page += open("profile.css").read()
         return Page
 
-############################################################################### Image Host
+############################################################################### get other profiles (to my database)
 
     @cherrypy.expose
-    def images(self,image):
-        dp = open("images/"+image)
-        return dp.read()
+    def getProfileData(self,profile_username,sender,ip,port):
+        output_dict = {
+            "profile_username":profile_username,
+            "sender":sender
+            }
+        data = json.dumps(output_dict)
+        req = urllib2.Request("http://"+ip+":"+port+"/getProfile", data, {'Content-Type':'application/json'})
+        response = urllib2.urlopen(req)
+        f = open("server/profile/" + profile_username + "test" + ".txt",'w+')
+        input_dict = json.loads(response.read())
+        try:
+            fullname = input_dict['fullname']
+        except:
+            fullname = "no name"
+        try:
+            position = input_dict['position']
+        except:
+            position = "no position"
+        try:
+            description = input_dict['description']
+        except:
+            description = "no description"
+        try:
+            location = input_dict['location']
+        except:
+            location = "nolocation"
+        try:
+            picture = input_dict['picture']
+        except:
+            picture = "nopicture"
+        try:
+            encoding = input_dict['encoding']
+        except:
+            encoding = 0
+        try:
+            encryption = input_dict['encryption']
+        except:
+            encryption = 0
+        try:
+            decryptionKey = input_dict['decryptionKey']
+        except:
+            decryptionKey = "nokey"
+        f.write("<<fullname>>"+str(fullname)+">>\n<<position>>"+str(position)+">>\n<<description>>"+str(description)+">>\n<<location>>"+str(location)+">>\n<<picture>>"+str(picture))
+        f.close()
+
+############################################################################### Clean input (no HTML tags)
+
+    def cleanHTML(self,text):
+        cleanr = re.compile('<.*?>')
+        cleantext = re.sub(cleanr, '', text)
+        return cleantext
 
 ############################################################################### Give ping (to users)
 

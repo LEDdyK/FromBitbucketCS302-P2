@@ -5,7 +5,7 @@ $(document).ready(
 			var portText = document.getElementById('port').textContent;
 			var head = "http://";
 			var sep = ":"
-			var API1 = "/getonlineusers";
+			var API1 = "/getonlineusers?item=username";
 			var API2 = "/checkStatus";
 			var API3 = "/getBoard";
 			var API4 = "/getLatest";

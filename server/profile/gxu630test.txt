@@ -1,0 +1,5 @@
+<<fullname>>George X>>
+<<position>>Company Memer>>
+<<description>>just switch to electrical if ur code doesnt compile>>
+<<location>>North Korea>>
+<<picture>>https://i.imgur.com/JuUnq7t.png
