@@ -119,7 +119,7 @@ class MainApp(object):
 ############################################################################### Messages Page
 
     @cherrypy.expose
-    def messages(self,user="0000"):
+    def messages(self,user="1111"):
         Page = '<head></head><body>'
         Page += '<div class=formMessage>'
         Page += '<form action="/sendMessage">'
@@ -189,12 +189,16 @@ class MainApp(object):
         else:
             raise cherrypy.HTTPRedirect('/login')
     
-    #TODO
-    """Allowing this only allows the user lkim564 to login through this script
-    Adjust so that anyone may log in"""
     def authoriseUserLogin(self, username, password):
         hashedPass = hashlib.sha256(str(password+username)).hexdigest()
-        if (username == "lkim564") and (hashedPass == "d9174a05cbe8d7707c53d7d5b78ce6190cd65a8f0fbc849dc966d962a88302e3"):
+        """if (username == "lkim564") and (hashedPass == "d9174a05cbe8d7707c53d7d5b78ce6190cd65a8f0fbc849dc966d962a88302e3"):
+            return 0
+        else:
+            return 1"""
+        response = urllib2.urlopen(defURL + '/getList?username=' + username + '&password=' + hashedPass)
+        errorPage = response.read().split(',')
+        errorCode = errorPage[0]
+        if errorCode == '0':
             return 0
         else:
             return 1
