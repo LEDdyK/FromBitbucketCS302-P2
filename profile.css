@@ -7,6 +7,9 @@
 		font-family: Sans-Serif;
 		font-size: 20px;
 	}
+	a {
+		color: rgba(35, 223, 244, 1);
+	}
 	
 	.fullname {
 		margin-top: 40px;

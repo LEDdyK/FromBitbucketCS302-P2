@@ -24,7 +24,7 @@ import urlparse
 
 # The address we listen for connections on
 defURL = "http://cs302.pythonanywhere.com"
-listen_ip = "172.23.154.65"
+listen_ip = "192.168.1.75"
 listen_port = 10001
 #Through uni wifi
 reportIP = "172.23.154.65"
@@ -119,9 +119,8 @@ class MainApp(object):
 ############################################################################### Messages Page
 
     @cherrypy.expose
-    def messages(self):
+    def messages(self,user="0000"):
         Page = '<head></head><body>'
-        #Page += '<div class=userbuttons></div>
         Page += '<div class=formMessage>'
         Page += '<form action="/sendMessage">'
         Page += 'Receiver (username):<br>'
@@ -143,13 +142,18 @@ class MainApp(object):
         Page += '<input type="submit" value="send"><br>'
         Page += '</form>'
         Page += '</div>'
-        Page += '<div id="contacts_content"></div>'
+        Page += '<div id="messagePanel">'
+        try:
+            msg = open("messages/" + user + ".txt",'r')
+            Page += msg.read()
+            msg.close()
+        except:
+            Page += 'nothing to see here'
+        Page += '</div>'
+        Page += '<div id="contacts_content">'
+        Page += self.make_buttons()
+        Page += '</div>'
         Page += '</body>'
-        Page += '<script language="javascript">'
-        Page += open("jquery-3.3.1.min.js","r").read()
-        Page += '</script><script language="javascript">'
-        Page += open("test2.js","r").read()
-        Page += '</script>'
         return Page
 
 ############################################################################### Login (to server) <<tested and works>>
@@ -219,12 +223,11 @@ class MainApp(object):
     def make_buttons(self):
         userList = self.getallusers().split('<br>')
         Page = ''
-        Page += '<body>'
         Page += "<div id=ip>" + listen_ip + "</div><div id=port>" + str(listen_port) + "</div>"
         for i in range (0, len(userList)-1):
-            Page += '<button id=' + userList[i] + ' type="button" onclick="autofill()" disabled>' + userList[i] + '</button><br>'
-        Page += '<div class=test>testing</div>'
-        Page += '</body>'
+            Page += '<a href="/messages?user='+userList[i]+'">'
+            Page += '<button id=' + userList[i] + ' type="button" disabled>' + userList[i] + '</button><br>'
+            Page += '</a>'
         Page += '<script language="javascript">'
         Page += open("jquery-3.3.1.min.js","r").read()
         Page += '</script><script language="javascript">'
@@ -559,7 +562,7 @@ class MainApp(object):
         data = json.dumps(output_dict)
         req = urllib2.Request("http://"+ip+":"+port+"/receiveMessage", data, {'Content-Type':'application/json'})
         response = urllib2.urlopen(req)
-        raise cherrypy.HTTPRedirect('/messages')
+        raise cherrypy.HTTPRedirect('/messages?user='+receiver)
 
 ############################################################################### Send files (to users) <<tested and works>>
 
@@ -681,6 +684,8 @@ class MainApp(object):
         except KeyError:
             decryptionKey = "nokey"
         Page = "<body>"
+        Page += '<div class=redirectBack><a href="/">Back</a></div>'
+        Page += '<div class=redirectEdit><a href="/editProfile">Edit Profile</a></div>'
         Page += "<div class=fullname><div id=fullname_header>Fullname</div><div id=fullname_content>"+self.cleanHTML(fullname)+"</div></div>"
         Page += "<div class=position><div id=position_header>Position</div><div id=position_content>"+self.cleanHTML(position)+"</div></div>"
         Page += "<div class=description><div id=description_header>Description</div><div id=description_content>"+newDes+"</div></div>"
@@ -689,6 +694,39 @@ class MainApp(object):
         Page += "</body>"
         Page += open("profile.css").read()
         return Page
+
+############################################################################### Edit profile
+    
+    @cherrypy.expose
+    def editProfile(self):
+        editable = open('server/profile/'+cherrypy.session['username']+'.txt','r')
+        sections = editable.read().split('>>')
+        editable.close()
+        Page = '<head></head><body>'
+        Page += '<div class=editform>'
+        Page += '<form action=/submitEdit>'
+        Page += 'Fullname:<br>'
+        Page += '<input type="text" name="fullname" value="'+sections[1]+'"><br>'
+        Page += 'Position:<br>'
+        Page += '<input type="text" name="position" value="'+sections[3]+'"><br>'
+        Page += 'Description:<br>'
+        Page += '<input type="text" name="description" value="'+sections[5]+'"><br>'
+        Page += 'Location:<br>'
+        Page += '<input type="text" name="location" value="'+sections[7]+'"><br>'
+        Page += 'Picture:<br>'
+        Page += '<input type="text" name="picture" value="'+sections[9]+'"><br><br>'
+        Page += '<input type="submit" value="submit">'
+        Page += '</form>'
+        Page += '</div>'
+        Page += '</body>'
+        return Page
+
+    @cherrypy.expose
+    def submitEdit(self,fullname='',position='',description='',location='',picture=''):
+        editable = open('server/profile/'+cherrypy.session['username']+'.txt','w')
+        editable.write('<<fullname>>'+fullname+'>>\n<<position>>'+position+'>>\n<<description>>'+description+'>>\n<<location>>'+location+'>>\n<<picture>>'+picture+'>>\n<<lastUpdated>>'+str(time.time()))
+        editable.close()
+        raise cherrypy.HTTPRedirect('/viewProfile?profile_username='+cherrypy.session['username']+'&sender='+cherrypy.session['username']+'&ip='+listen_ip+'&port='+str(listen_port))
 
 ############################################################################### Auto get other profile data
 
@@ -755,7 +793,7 @@ class MainApp(object):
             decryptionKey = input_dict['decryptionKey']
         except:
             decryptionKey = "nokey"
-        f.write("<<fullname>>"+str(fullname)+">>\n<<position>>"+str(position)+">>\n<<description>>"+str(description)+">>\n<<location>>"+str(location)+">>\n<<picture>>"+str(picture)+"<<lastUpdated>>"+lastUpdated)
+        f.write("<<fullname>>"+str(fullname)+">>\n<<position>>"+str(position)+">>\n<<description>>"+str(description)+">>\n<<location>>"+str(location)+">>\n<<picture>>"+str(picture)+">>\n<<lastUpdated>>"+lastUpdated)
         f.close()
 
 ############################################################################### Clean input (no HTML tags)
