@@ -1,0 +1,5 @@
+<<fullname>>Steven Yan>>
+<<position>>Shooting Guard>>
+<<description>>One of 302 student suffering in python>>
+<<location>>Basketball Court>>
+<<picture>>https://pbs.twimg.com/media/DOsuNmmW4AEQPmg.jpg<<lastUpdated>>1528189381.83

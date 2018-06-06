@@ -596,7 +596,6 @@ class MainApp(object):
         sender = input_dict['sender']
         
         proFile = open("server/profile/"+profile_username+".txt", "r")
-        lastUpdated = str(time.time())
         proFileSeg = proFile.read().split('>>')
         proFile.close()
         fullname = proFileSeg[1]
@@ -607,6 +606,7 @@ class MainApp(object):
         encoding = 0
         encryption = 0
         decryptionKey = "nokey"
+        lastUpdated = proFileSeg[11]
         output_dict = {
             "lastUpdated":lastUpdated,
             "fullname":fullname,
@@ -635,6 +635,10 @@ class MainApp(object):
         req = urllib2.Request("http://"+ip+":"+port+"/getProfile", data, {'Content-Type':'application/json'})
         response = urllib2.urlopen(req)
         input_dict = json.loads(response.read())
+        try:
+            lastUpdated = input_dict['lastUpdated']
+        except:
+            lastUpdated = "no stamp"
         try:
             fullname = input_dict['fullname']
         except KeyError:
@@ -698,6 +702,10 @@ class MainApp(object):
         f = open("server/profile/" + profile_username + ".txt",'w+')
         input_dict = json.loads(response.read())
         try:
+            lastUpdated = input_dict['lastUpdated']
+        except:
+            lastUpdated = "no stamp"
+        try:
             fullname = input_dict['fullname']
         except:
             fullname = "no name"
@@ -729,7 +737,7 @@ class MainApp(object):
             decryptionKey = input_dict['decryptionKey']
         except:
             decryptionKey = "nokey"
-        f.write("<<fullname>>"+str(fullname)+">>\n<<position>>"+str(position)+">>\n<<description>>"+str(description)+">>\n<<location>>"+str(location)+">>\n<<picture>>"+str(picture))
+        f.write("<<fullname>>"+str(fullname)+">>\n<<position>>"+str(position)+">>\n<<description>>"+str(description)+">>\n<<location>>"+str(location)+">>\n<<picture>>"+str(picture)+"<<lastUpdated>>"+lastUpdated)
         f.close()
 
 ############################################################################### Clean input (no HTML tags)
