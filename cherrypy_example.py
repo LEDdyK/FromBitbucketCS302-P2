@@ -92,15 +92,15 @@ class MainApp(object):
             Page += "<div id=ip>" + listen_ip + "</div><div id=port>" + str(listen_port) + "</div>"
             Page += "</body>"
             Page += '<script language="javascript">'
-            Page += open("jquery-3.3.1.min.js","r").read()
+            Page += open("cssandjs/jquery-3.3.1.min.js","r").read()
             Page += '</script><script language="javascript">'
-            Page += open("pageMain.js","r").read()
+            Page += open("cssandjs/pageMain.js","r").read()
             Page += '</script>'
-            Page += open("test.css","r").read()
+            Page += open("cssandjs/test.css","r").read()
         except KeyError: #There is no username
             Page = "<body><div>Welcome!<br>"
             Page += "Click here to <a href='/login'>login</a>.</div></body>"
-            Page += open("pageWelcome.css","r").read()
+            Page += open("cssandjs/pageWelcome.css","r").read()
         return Page
 
     @cherrypy.expose
@@ -165,7 +165,7 @@ class MainApp(object):
         Page += '<div class=username>Username:<br><input type="text" name="username"/></div>'
         Page += '<div class=password>Password:<br><input type="text" name="password"/>'
         Page += '<input class=login type="submit" value="Login"/></form></div></body>'
-        Page += open("pageLogin.css","r").read()
+        Page += open("cssandjs/pageLogin.css","r").read()
         return Page
     
     @cherrypy.expose
@@ -233,9 +233,9 @@ class MainApp(object):
             Page += '<button id=' + userList[i] + ' type="button" disabled>' + userList[i] + '</button><br>'
             Page += '</a>'
         Page += '<script language="javascript">'
-        Page += open("jquery-3.3.1.min.js","r").read()
+        Page += open("cssandjs/jquery-3.3.1.min.js","r").read()
         Page += '</script><script language="javascript">'
-        Page += open("messages.js","r").read()
+        Page += open("cssandjs/messages.js","r").read()
         Page += '</script>'
         return Page
 
@@ -696,7 +696,7 @@ class MainApp(object):
         Page += "<div class=location><div id=location_header>Location</div><div id=location_content>"+self.cleanHTML(location)+"</div></div>"
         Page += '<div class=picture><div id=picture_header>Picture</div><div id=picture_content><img src="'+self.cleanHTML(picture)+'"></div></div>'
         Page += "</body>"
-        Page += open("profile.css").read()
+        Page += open("cssandjs/profile.css").read()
         return Page
 
 ############################################################################### Edit profile

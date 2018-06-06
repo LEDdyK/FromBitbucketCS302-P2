@@ -1,13 +1,32 @@
-* To install, change to the directory where setup.py is located and type (python-2.3 or later needed):
+Instructions for running
 
-    python setup.py install
+1.
+Find Local IP
 
-* To learn how to use it, look at the examples under cherrypy/tutorial/ or go to http://www.cherrypy.org for more info.
+2.
+Open file "cherrypy_example.py"
 
-* To run the regression tests, just go to the cherrypy/test/ directory and type:
+3.
+Edit listen_ip as your local IP (within quotation marks/as string)
+Edit reportIP as your local IP as well (within quotation marks/as string)
+Edit listen_port as an unused port (WITHOUT quotation marks/as integer)
+If on university desktop, set reportLocation as 0 (within quotation marks/as string)
+If on university wifi, set reportLocation as 1 (within quotation marks/as string)
+If outside university, set reportLocation as 2 (within quotation marks/as string)
 
-    nosetests -s ./
+4.
+Open the main repository (where the file "cherrypy_example.py" is located)
 
-  Or to run individual tests type:
+5.
+Open Terminal on this repository
 
-    nosetests -s test_foo.py
+6.
+Run: "python cherrypy_example.py"
+
+7.
+Open an internet browser and type in the url: "http://<your local IP>:<your listen port>"
+
+8.
+Run with the credentials:
+username = lkim564
+password = pluglive
