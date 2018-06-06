@@ -152,6 +152,8 @@ class MainApp(object):
             sec_split = first.split('[[separatorEND]]')
             output = ''
             for i in range (0,len(sec_split)-1):
+                #cleaning untested here
+                #sec_split[i] = self.cleanHTML(sec_split[i])
                 lines = sec_split[i].split('[[separator]]')
                 output += lines[0] + "<br>"
                 output += self.embbedObjects(lines[1],True)
