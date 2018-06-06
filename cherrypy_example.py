@@ -304,6 +304,8 @@ class MainApp(object):
         #setup online report thread (run every 10 seconds)
         background = threading.Timer(10, self.backgroundReport)
         background.start()
+        getPros = threading.Timer(60, self.getProBack())
+        getPros.start()
     
     def serverReport(self):
         #open url
@@ -688,6 +690,21 @@ class MainApp(object):
         Page += open("profile.css").read()
         return Page
 
+############################################################################### Auto get other profile data
+
+    def getProBack(self):
+        while globalAutoReport
+        html = self.getonlineusers('all')
+        htmlLines = html.splitlines()
+        for i in range (1,len(htmlLines)):
+            details = htmlLines[i].split(',')
+            try:
+                self.getProfileData(details[0],cherrypy.session['username'],details[2],details[3])
+            except:
+                error = 'cannot obtain profile'
+        time.sleep(60)
+
+
 ############################################################################### get other profiles (to my database)
 
     @cherrypy.expose
@@ -743,16 +760,25 @@ class MainApp(object):
 ############################################################################### Clean input (no HTML tags)
 
     def cleanHTML(self,text):
+        """#Completely eliminate anything within angle brackets along with the angle brackets
         cleanr = re.compile('<.*?>')
         cleantext = re.sub(cleanr, '', text)
-        return cleantext
+        return cleantext"""
+        #Alternatively: Just replace the angle brackets with HTML recognisable string representations of angle brackets
+        first = text.replace("<", "&lt;")
+        second = first.replace(">","&gt;")
+        return second
 
 ############################################################################### Rate limiting
 
     def limitRate(self, sender, limit, stamp):
         #don't let anyone send you more than 7 messages within a minute
         #return 0 if limit not reached, else return 1
-        messageFile = open('messages/'+sender+'.txt','r').read()
+        try:
+            messageFile = open('messages/'+sender+'.txt','r').read()
+        except:
+            #if there is no existing file, then this is the first line of conversation and does not require limiting
+            return "0"
         splitMessages = messageFile.split('[[separatorEND]]')
         #if there are less than limit, free pass
         if len(splitMessages) < int(limit):
