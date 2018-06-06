@@ -147,8 +147,16 @@ class MainApp(object):
         Page += '<div id="messagePanel">'
         try:
             msg = open("messages/" + user + ".txt",'r')
-            Page += msg.read()
+            first = msg.read()
             msg.close()
+            sec_split = first.split('[[separatorEND]]')
+            output = ''
+            for i in range (0,len(sec_split)-1):
+                lines = sec_split[i].split('[[separator]]')
+                output += lines[0] + "<br>"
+                output += self.embbedObjects(lines[1],True)
+                output += lines[1] + "<br>" + lines[2] + "<br><br>"
+            Page += output
         except:
             Page += 'nothing to see here'
         Page += '</div>'

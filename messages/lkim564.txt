@@ -1,7 +1,1 @@
-Test
-only a test
-just a test
-still testing
-test
-test
-test
+Time0[[separator]]Message0[[separator]]Sender0[[separatorEND]]Time1[[separator]]Message1[[separator]]Sender1[[separatorEND]]Time2[[separator]]Message2[[separator]]Sender2[[separatorEND]]Time3[[separator]]Message3[[separator]]Sender3[[separatorEND]]Time4[[separator]]Message4[[separator]]Sender4[[separatorEND]]
