@@ -1,1 +1,0 @@
-stamp: 1528240772.85[[separator]]message: {{file/type=application/pdf}}{{messages/receivedfiles/Application Protocol v3.pdf}}[[separator]]sender: kmur120[[separatorEND]]

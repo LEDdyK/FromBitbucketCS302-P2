@@ -1,1 +1,1 @@
-4[[INITseparator]]stamp: 1528246287[[separator]]message: boop[[separator]]sender: gxu630[[separatorEND]]stamp: 1528246160[[separator]]message: sdfa[[separator]]sender: gxu630[[separatorEND]]stamp: 1528242044.26[[separator]]message: {{file/type=text/plain}}{{messages/receivedfiles/sendfinalplswork.txt}}[[separator]]sender: gxu630[[separatorEND]]stamp: 1528241951.12[[separator]]message: {{file/type=text/plain}}{{messages/receivedfiles/send3.txt}}[[separator]]sender: gxu630[[separatorEND]]
+0[[INITseparator]]

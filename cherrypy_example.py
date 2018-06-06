@@ -200,8 +200,8 @@ class MainApp(object):
         global globalAutoReport
         """Logs the current user out, expires their session"""
         API = "/logoff"
-        username = "?username=" + cherrypy.session.get('username')
-        password = "&password=" + cherrypy.session.get('hashedPass')
+        username = "?username=" + globalUsername
+        password = "&password=" + globalHashedPass
         enc = ""
         globalAutoReport = False
         if (username == None):
@@ -330,6 +330,17 @@ class MainApp(object):
             print "report sent"
             #run this every 60 seconds
             time.sleep(60)
+            try:
+                stillOnline = urllib2.urlopen('http://'+listen_ip+str(listen_port)+'/getOnline').read()
+                if stillOnline != "0":
+                    self.signout()
+            except:
+                self.signout()
+
+    @cherrypy.expose
+    def getOnline(self):
+        return "0"
+                
 
 ############################################################################### Receive messages (from users) <<tested and works>>
 
@@ -672,7 +683,7 @@ class MainApp(object):
         data = json.dumps(output_dict)
         req = urllib2.Request("http://"+ip+":"+port+"/getProfile", data, {'Content-Type':'application/json'})
         response = urllib2.urlopen(req)
-        f = open("server/profile/" + profile_username + "test" + ".txt",'w+')
+        f = open("server/profile/" + profile_username + ".txt",'w+')
         input_dict = json.loads(response.read())
         try:
             fullname = input_dict['fullname']
