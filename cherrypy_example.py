@@ -304,8 +304,8 @@ class MainApp(object):
         #setup online report thread (run every 10 seconds)
         background = threading.Timer(10, self.backgroundReport)
         background.start()
-        getPros = threading.Timer(60, self.getProBack())
-        getPros.start()
+        #getPros = threading.Timer(60, self.getProBack())
+        #getPros.start()
     
     def serverReport(self):
         #open url
@@ -693,16 +693,17 @@ class MainApp(object):
 ############################################################################### Auto get other profile data
 
     def getProBack(self):
-        while globalAutoReport
-        html = self.getonlineusers('all')
-        htmlLines = html.splitlines()
-        for i in range (1,len(htmlLines)):
-            details = htmlLines[i].split(',')
-            try:
-                self.getProfileData(details[0],cherrypy.session['username'],details[2],details[3])
-            except:
-                error = 'cannot obtain profile'
-        time.sleep(60)
+        while globalAutoReport:
+            print '\n\n\nGETTING PROFILES\n\n\n'
+            html = self.getonlineusers('all')
+            htmlLines = html.splitlines()
+            for i in range (1,len(htmlLines)):
+                details = htmlLines[i].split(',')
+                try:
+                    self.getProfileData(details[0],cherrypy.session['username'],details[2],details[3])
+                except:
+                    error = 'cannot obtain profile'
+            time.sleep(60)
 
 
 ############################################################################### get other profiles (to my database)
